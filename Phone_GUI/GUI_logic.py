@@ -1,21 +1,38 @@
 from kivy.app import App
-from kivy.uix.label import Label
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.image import Image
-from kivy.uix.textinput import TextInput
-from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.properties import ObjectProperty
+from kivy.lang import Builder
+from kivy.uix.screenmanager import ScreenManager, Screen
+import bluetooth
 
 
-class MyWidget (Widget):
+
+# Defines different screens
+class ControlWindow(Screen):
     pass
 
-class BasicUI(App):
+class BluetoothWindow(Screen):
+    def scan(self):
+        print("Scanning for bluetooth devices:")
+        devices = bluetooth.discover_devices(lookup_names = True, lookup_class = True)
+        number_of_devices = len(devices)
+        print(number_of_devices,"devices found")
+        for addr, name, device_class in devices:
+            print("")
+            print("Device:")
+            print("Device Name: %s" % (name))
+            print("Device MAC Address: %s" % (addr))
+            print("Device Class: %s" % (device_class))
+
+class WindowManager(ScreenManager):
+    pass
+
+kv = Builder.load_file('UserInterface.kv')
+
+class AwesomeApp(App):
     def build(self):
-        return MyWidget()
+        return kv
 
 if __name__=="__main__":
-    BasicUI().run()
+    AwesomeApp().run()
 
