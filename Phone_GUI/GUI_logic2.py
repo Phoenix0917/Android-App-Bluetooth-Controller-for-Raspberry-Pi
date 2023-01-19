@@ -54,6 +54,7 @@ class BluetoothWindow(Screen):
         print(self.ids.Name.text)
         print(self.ids.Address.text)
         print("Scanning for bluetooth services:")
+
         if self.ids.Name.text != '' and self.ids.Address.text != '':
             tmp = bytes(self.ids.Name.text, 'ISO-8859-1')
             tmp2 = tmp.decode('unicode_escape').encode('raw_unicode_escape')
@@ -74,24 +75,35 @@ class BluetoothWindow(Screen):
             except:
                 print("invalid MAC Addr format")
                 return
-                
+
         else:
             services = bluetooth.find_service()
+        
         print("hi")
         print(len(services))
+
+        # clean out any prior widgets
+        self.ids.grid1.clear_widgets()
+        #for x in range(len(self.ids.grid1.rows))
+
         self.ids.grid1.rows = len(services)
         self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
         print(len(services) / self.num_elems_in_1screen)
-
 
 
         def resize(instance, value):
             #print('My callback is call from', instance)
             #print('and the a value changed to', value)
             #self.ids.grid1.height = self.ids.scrollie.height * len(services) / self.num_elems
+            print(self.ids.grid1.row_default_height)
             self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
-        self.ids.scrollie.bind(height = resize)
+        #self.ids.scrollie.bind(height = resize)
         self.ids.grid1.bind(row_default_height = resize)
+
+        def resize2(instance, value):
+            self.ids.grid1.row_default_height = instance.height / self.num_elems_in_1screen
+            self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
+        self.ids.scrollie.bind(height = resize2)
 
         list_of_info = []
         for x in range(len(services)):
@@ -124,6 +136,12 @@ class BluetoothWindow(Screen):
                     button.font_size = button.width / (8.5 * self.num_elems_in_1screen)
                 print("hi")
         self.ids.grid1.bind(row_default_height = resize_label_text_if_elements_changes)
+
+    '''
+    def change_window(instance, value):
+        instance.ids.grid1.row_default_height = instance.height / instance.num_elems_in_1screen
+    BluetoothWindow.bind(height = change_window)
+    '''
 
     def increment_elem (self):
         self.num_elems_in_1screen = self.num_elems_in_1screen + 1
