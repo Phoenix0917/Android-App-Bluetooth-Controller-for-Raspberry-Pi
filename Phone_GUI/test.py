@@ -52,13 +52,10 @@ class BluetoothWindow(Screen):
     def scanService(self):
         print("Scanning for bluetooth services:")
         services = bluetooth.find_service()
-        print("hi")
-        #scroll_info = ''
-        self.ids.grid1.rows = 0
+        tmp = []
+
         for service in services:
-            self.ids.grid1.rows = self.ids.grid1.rows + 1
-            self.info.append(0)
-            self.info[self.ids.grid1.rows - 1] = Label(
+            tmpElem = Label(
                 text_size= (None,None),
                 pos_hint={'center_x': 0.5, 'center_y': .95},
                 size_hint_y=None,
@@ -67,31 +64,12 @@ class BluetoothWindow(Screen):
                 halign="center",
                 valign = "middle",
             )
-            
+            tmp.append(tmpElem)
+        for x in range(len(services)):
+            self.ids.output.add_widget(tmp[x])
 
-            '''
-            info = Label(
-                text = str(service['name']) + '\n' + str(service['host']) + '\n' + str(service['port']) + str(service['protocol']),
-                font_size = self.width / 100,
-                halign= 'left',
-                valign= 'top',
-                pos_hint = {'x': 0.03, 'top': 0.97}
-            )
-            
-            info = Button(
-                text = "this is button"
 
-            
-            
-            service_info = str(service['name']) + "\nHost --> " + str(service['host']) + "\nPort --> " + str(service['port']) + "\nProtocal --> "+ str(service['protocol'] + '\n\n')
-            scroll_info = scroll_info + service_info
-            info = Label(
-                text = scroll_info,
-            '''
-            
-            #self.ids.grid1.info.bind(size=self.setting_function)
-            self.ids.grid1.add_widget(self.info[self.ids.grid1.rows - 1])
-            self.info[self.ids.grid1.rows - 1].bind(size=self.setting_function)
+            #self.info[self.ids.grid1.rows - 1].bind(size=self.setting_function)
     
     def setting_function(self, *args):
         """FUNCTION TO UPDATE THE LABEL TO ADJUST ITSELF ACCORDING TO SCREEN SIZE CHANGES"""
@@ -103,7 +81,7 @@ class BluetoothWindow(Screen):
 class WindowManager(ScreenManager):
     pass
 
-kv = Builder.load_file('UserInterface2.kv')
+kv = Builder.load_file('UserInterface3.kv')
 
 class AwesomeApp(App):
     def build(self):

@@ -63,21 +63,14 @@ WindowManager: # root rule (can be any widget)
 
             Button:
                 text: "Go Back"
-                font_size: self.width/20
+                font_size: '15dp'
                 on_release: app.root.current = "control"
         
         ScrollView:
-            size_hint_y: .73
-            pos_hint: {'x':0, 'y': .11}
-            do_scroll_x: False
-            do_scroll_y: True
-
-            GridLayout:
-                size: root.width, root.height
-                id: grid1
-                size_hint_x: None
-                size_hint_y: None
-                cols: 1
-                height: self.minimum_height
-                row_default_height: 100
-                row_force_default: True
+                size_hint: (None, None)
+                size: (root.width, root.height)
+                GridLayout:
+                    id: output
+                    cols: 1
+                    size_hint_y: 50
+                    height: self.minimum_height

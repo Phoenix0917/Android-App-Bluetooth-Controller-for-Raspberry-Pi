@@ -61,23 +61,30 @@ WindowManager: # root rule (can be any widget)
                 font_size: self.width/20
                 on_press: self.parent.parent.parent.scanService()
 
+            GridLayout:
+                cols: 2
+                Button:
+                    text: "+1 elem"
+                    on_press: root.increment_elem()
+                Button:
+                    text: "-1 elem"
+                    on_press: root.decrement_elem()
+
             Button:
                 text: "Go Back"
-                font_size: self.width/20
+                font_size: '15dp'
                 on_release: app.root.current = "control"
         
         ScrollView:
-            size_hint_y: .73
-            pos_hint: {'x':0, 'y': .11}
             do_scroll_x: False
             do_scroll_y: True
+            id: scrollie
 
             GridLayout:
-                size: root.width, root.height
+                width: self.parent.width
                 id: grid1
-                size_hint_x: None
+                size_hint_x: 1
                 size_hint_y: None
                 cols: 1
-                height: self.minimum_height
-                row_default_height: 100
+                row_default_height: self.parent.height /4 
                 row_force_default: True
