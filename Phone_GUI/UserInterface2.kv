@@ -50,6 +50,7 @@ WindowManager: # root rule (can be any widget)
             Label:
                 text: "Bluetooth Screen"
                 size_hint: 1, 0.25
+                font_size: self.width/20
             
             Button:
                 text: "Scan Devices"
@@ -62,13 +63,45 @@ WindowManager: # root rule (can be any widget)
                 on_press: self.parent.parent.parent.scanService()
 
             GridLayout:
-                cols: 2
-                Button:
-                    text: "+1 elem"
-                    on_press: root.increment_elem()
-                Button:
-                    text: "-1 elem"
-                    on_press: root.decrement_elem()
+                rows: 4
+
+                Label:
+                    text: "Optional Service Search Criteria"
+                    font_size: self.width/30
+
+                GridLayout:
+                    cols: 2
+
+                    Label:
+                        text: "Name"
+                        size_hint: (0.3 , 1)
+                        font_size: self.parent.width/30
+
+                    TextInput:
+                        id: Name
+                        multiline: False
+
+                GridLayout:
+                    cols: 2
+
+                    Label:
+                        text: "Address"
+                        size_hint: (0.3 , 1)
+                        font_size: self.parent.width/30
+
+                    TextInput:
+                        id: Address
+                        multiline: False
+
+
+                GridLayout:
+                    cols: 2
+                    Button:
+                        text: "+1 elem"
+                        on_press: root.increment_elem()
+                    Button:
+                        text: "-1 elem"
+                        on_press: root.decrement_elem()
 
             Button:
                 text: "Go Back"

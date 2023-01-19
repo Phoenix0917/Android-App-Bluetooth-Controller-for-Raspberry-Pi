@@ -51,13 +51,39 @@ class BluetoothWindow(Screen):
      
     
     def scanService(self):
+        print(self.ids.Name.text)
+        print(self.ids.Address.text)
         print("Scanning for bluetooth services:")
-        services = bluetooth.find_service()
+        if self.ids.Name.text != '' and self.ids.Address.text != '':
+            tmp = bytes(self.ids.Name.text, 'ISO-8859-1')
+            tmp2 = tmp.decode('unicode_escape').encode('raw_unicode_escape')
+            try:
+                services = bluetooth.find_service(name = tmp2, address=self.ids.Address.text)
+            except:
+                print("invalid MAC Addr format")
+                return
+
+        elif self.ids.Name.text != '':
+            tmp = bytes(self.ids.Name.text, 'ISO-8859-1')
+            tmp2 = tmp.decode('unicode_escape').encode('raw_unicode_escape')
+            services = bluetooth.find_service(name=tmp2)
+
+        elif self.ids.Address.text != '':
+            try:
+                services = bluetooth.find_service(address=self.ids.Address.text)
+            except:
+                print("invalid MAC Addr format")
+                return
+                
+        else:
+            services = bluetooth.find_service()
         print("hi")
         print(len(services))
         self.ids.grid1.rows = len(services)
         self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
         print(len(services) / self.num_elems_in_1screen)
+
+
 
         def resize(instance, value):
             #print('My callback is call from', instance)
@@ -70,8 +96,13 @@ class BluetoothWindow(Screen):
         list_of_info = []
         for x in range(len(services)):
             list_of_info.append(-1)
+            if services[x]['name'] != None:
+                tmp_name = str(services[x]['name'])
+                tmp_name = tmp_name[2:len(tmp_name) - 2]
+            else:
+                tmp_name = "Unset Name"
             list_of_info[x] = Button(
-                text= "Name:  " + str(services[x]['name']) + '\nHost:  ' + str(services[x]['host']) + '\nPort:  ' + str(services[x]['port']) + '\nProtocol:  ' +str(services[x]['protocol']),
+                text= "Name:  " + tmp_name + '\nHost:  ' + str(services[x]['host']) + '\nPort:  ' + str(services[x]['port']) + '\nProtocol:  ' +str(services[x]['protocol']),
                 disabled = True,
                 size_hint_x = 1,
                 halign= "left",
