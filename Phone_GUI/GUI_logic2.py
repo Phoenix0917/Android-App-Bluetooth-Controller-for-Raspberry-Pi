@@ -1,6 +1,5 @@
 from kivy.app import App
 from kivy.uix.widget import Widget
-from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.label import Label
@@ -9,15 +8,25 @@ from kivy.graphics import *
 import bluetooth
 
 
+class ServiceInfo:
+    def __init__(self, name, addr, port, proto, button):
+        self.name = name
+        self.addr = addr
+        self.port = port
+        self.proto = proto
+        self.button = button
+
 
 # Defines different screens
 class ControlWindow(Screen):
     pass
 
 class BluetoothWindow(Screen):
+
     def __init__(self, **kw):
         super().__init__(**kw)
         self.info = []
+        self.service_scan_results = []
         self.num_elems_in_1screen = 4
     '''
     def __init__(self, **kw):
@@ -82,8 +91,9 @@ class BluetoothWindow(Screen):
         print("hi")
         print(len(services))
 
-        # clean out any prior widgets
+        # clean out any prior widgets and data associated with them
         self.ids.grid1.clear_widgets()
+        self.service_scan_results = []
         #for x in range(len(self.ids.grid1.rows))
 
         self.ids.grid1.rows = len(services)
@@ -105,35 +115,42 @@ class BluetoothWindow(Screen):
             self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
         self.ids.scrollie.bind(height = resize2)
 
-        list_of_info = []
         for x in range(len(services)):
-            list_of_info.append(-1)
             if services[x]['name'] != None:
                 tmp_name = str(services[x]['name'])
                 tmp_name = tmp_name[2:len(tmp_name) - 2]
             else:
                 tmp_name = "Unset Name"
-            list_of_info[x] = Button(
-                text= "Name:  " + tmp_name + '\nHost:  ' + str(services[x]['host']) + '\nPort:  ' + str(services[x]['port']) + '\nProtocol:  ' +str(services[x]['protocol']),
+            
+            tmp_addr = str(services[x]['host'])
+            tmp_port = str(services[x]['port'])
+            tmp_proto = str(services[x]['protocol'])
+
+            tmp_button = Button(
+                text= "Name:  " + tmp_name + '\nHost:  ' + tmp_addr + '\nPort:  ' + tmp_port + '\nProtocol:  ' + tmp_proto,
                 disabled = True,
                 size_hint_x = 1,
                 halign= "left",
                 valign= "top"
             )
-            list_of_info[x].bind(size=list_of_info[x].setter('text_size')) 
+
+            self.service_scan_results.append(-1)
+            self.service_scan_results[x] = ServiceInfo(tmp_name, tmp_addr, tmp_port, tmp_proto, tmp_button)
+
+            self.service_scan_results[x].button.bind(size=self.service_scan_results[x].button.setter('text_size')) 
             
             def resize_label_text_if_window_changes(button, new_width):
                 button.font_size = button.width / (5 * self.num_elems_in_1screen)
                 if (self.num_elems_in_1screen == 1):
                     button.font_size = button.width / (8.5 * self.num_elems_in_1screen)
-            list_of_info[x].bind(width=resize_label_text_if_window_changes) # when info.height changes run this routine
-            self.ids.grid1.add_widget(list_of_info[x])
+            self.service_scan_results[x].button.bind(width=resize_label_text_if_window_changes) # when info.height changes run this routine
+            self.ids.grid1.add_widget(self.service_scan_results[x].button)
 
         def resize_label_text_if_elements_changes(grid, new_width):
-            for button in list_of_info:
-                button.font_size = button.width / (5 * self.num_elems_in_1screen)
+            for x in range(len(self.service_scan_results)):
+                self.service_scan_results[x].button.font_size = self.service_scan_results[x].button.width / (5 * self.num_elems_in_1screen)
                 if (self.num_elems_in_1screen == 1):
-                    button.font_size = button.width / (8.5 * self.num_elems_in_1screen)
+                    self.service_scan_results[x].button.font_size = self.service_scan_results[x].button.width / (8.5 * self.num_elems_in_1screen)
                 print("hi")
         self.ids.grid1.bind(row_default_height = resize_label_text_if_elements_changes)
 
