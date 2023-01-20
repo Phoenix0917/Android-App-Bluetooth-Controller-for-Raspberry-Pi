@@ -7,6 +7,7 @@ from kivy.uix.button import Button
 from kivy.graphics import *
 import bluetooth
 
+bt_client_sock = -1
 
 class ServiceInfo:
     def __init__(self, name, addr, port, proto, button):
@@ -15,6 +16,7 @@ class ServiceInfo:
         self.port = port
         self.proto = proto
         self.button = button
+        self.paired = False
 
 
 # Defines different screens
@@ -128,17 +130,68 @@ class BluetoothWindow(Screen):
 
             tmp_button = Button(
                 text= "Name:  " + tmp_name + '\nHost:  ' + tmp_addr + '\nPort:  ' + tmp_port + '\nProtocol:  ' + tmp_proto,
-                disabled = True,
                 size_hint_x = 1,
                 halign= "left",
                 valign= "top"
             )
+
 
             self.service_scan_results.append(-1)
             self.service_scan_results[x] = ServiceInfo(tmp_name, tmp_addr, tmp_port, tmp_proto, tmp_button)
 
             self.service_scan_results[x].button.bind(size=self.service_scan_results[x].button.setter('text_size')) 
             
+
+            def pair(instance):
+                global bt_client_sock
+                for paired_service_index in range(len(self.service_scan_results)):
+                    if self.service_scan_results[paired_service_index].button == instance: # found index corresponding with this button
+                        break
+
+                if self.service_scan_results[paired_service_index].paired == False: # begin pair attempt
+                    if self.service_scan_results[paired_service_index].proto == 'L2CAP':
+                        proto = bluetooth.L2CAP
+                    elif self.service_scan_results[paired_service_index].proto == 'RFCOMM':
+                        proto = bluetooth.RFCOMM
+                    else:
+                        print("unsupported socket type")
+                    addr = self.service_scan_results[paired_service_index].addr
+                    port = int(self.service_scan_results[paired_service_index].port)
+                    try:
+                        bt_client_sock = bluetooth.BluetoothSocket(proto)
+                        bt_client_sock.connect((addr, port))
+                        bt_client_sock.send("Client says hello")
+                        message = bt_client_sock.recv(80)
+                        print(message)
+                        print("succesful connection to server")
+                    except: 
+                        print("unsuccesful connection to server")
+                        return
+                    instance.background_color= '#79f53b'
+                    self.service_scan_results[paired_service_index].paired = True
+                    for unpaired_service_index in range(len(self.service_scan_results)):
+                        if unpaired_service_index != paired_service_index:
+                            self.service_scan_results[unpaired_service_index].button.disabled = True
+
+                else: # begin unpair
+                    try:
+                        bt_client_sock.close( )
+                        print("succesful disconnection from server")
+                    except:
+                        print("unsuccesful disconnection from server")
+                        return
+
+                    instance.background_color= [1, 1, 1, 1]
+                    self.service_scan_results[paired_service_index].paired = False
+                    for unpaired_service_index in range(len(self.service_scan_results)):
+                        if unpaired_service_index != paired_service_index:
+                            self.service_scan_results[unpaired_service_index].button.disabled = False
+            self.service_scan_results[x].button.bind(on_press = pair)
+
+
+
+
+
             def resize_label_text_if_window_changes(button, new_width):
                 button.font_size = button.width / (5 * self.num_elems_in_1screen)
                 if (self.num_elems_in_1screen == 1):
@@ -154,6 +207,12 @@ class BluetoothWindow(Screen):
                 print("hi")
         self.ids.grid1.bind(row_default_height = resize_label_text_if_elements_changes)
 
+
+    def pair(instance, value):
+        # unpair any previous pair
+        instance.color=(1, 0, 0, 1)
+
+        
     '''
     def change_window(instance, value):
         instance.ids.grid1.row_default_height = instance.height / instance.num_elems_in_1screen
