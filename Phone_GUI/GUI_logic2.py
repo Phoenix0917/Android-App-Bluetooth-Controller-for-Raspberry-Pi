@@ -4,10 +4,30 @@ from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.slider import Slider
 from kivy.graphics import *
+from kivy.core.window import Window
 import bluetooth
 
 bt_client_sock = -1
+
+
+
+# found class written by someone on git but this is how I think it may work?
+class ModifiedSlider(Slider):
+    def __init__(self, **kwargs):
+        self.register_event_type('on_release')
+        super(ModifiedSlider, self).__init__(**kwargs) # runs parent class init
+
+    def on_release(self):
+        self.value = ((self.max - self.min) / 2) + self.min
+
+    def on_touch_up(self, touch): # gets called twice - once by the slider and once by the screen?
+        super(ModifiedSlider, self).on_touch_up(touch) # runs parent classes on touch up function and stores it the touch it recieved 
+        if touch.grab_current == self: # checks if the current touch is the one that was dispatched for this widget
+            self.dispatch('on_release') # starts on_release event
+            return True
+
 
 class ServiceInfo:
     def __init__(self, name, addr, port, proto, button):
@@ -21,7 +41,8 @@ class ServiceInfo:
 
 # Defines different screens
 class ControlWindow(Screen):
-    pass
+    def slide_it(self, *args):
+        print(args)
 
 class BluetoothWindow(Screen):
 

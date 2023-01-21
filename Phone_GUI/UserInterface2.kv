@@ -36,6 +36,28 @@ WindowManager: # root rule (can be any widget)
             font_size: 32
             size_hint: .4, .3 
 
+        ModifiedSlider:
+            min: -50
+            max: 50
+            step: 1
+            value: ((self.max - self.min) / 2) + self.min
+            orientation: "vertical"
+            pos_hint: {'x': 0.25, 'y': .1}
+            size_hint: .1, .8 
+            cursor_size: 60, 60
+            on_value: root.slide_it(*args)
+
+        ModifiedSlider:
+            min: -50
+            max: 50
+            step: 1
+            value: ((self.max - self.min) / 2) + self.min
+            orientation: "vertical"
+            pos_hint: {'right': 0.75, 'y': .1}
+            size_hint: .1, .8 
+            cursor_size: 60, 60
+            on_value: root.slide_it(*args)
+
 
 <BluetoothWindow>: # class rule
     name: "bluetooth"
