@@ -9,7 +9,7 @@ from kivy.graphics import *
 from kivy.core.window import Window
 import bluetooth
 
-bt_client_sock = -1
+bt_client_sock = None
 
 
 
@@ -29,6 +29,7 @@ class ModifiedSlider(Slider):
             return True
 
 
+
 class ServiceInfo:
     def __init__(self, name, addr, port, proto, button):
         self.name = name
@@ -41,9 +42,29 @@ class ServiceInfo:
 
 # Defines different screens
 class ControlWindow(Screen):
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
     def slide_it(self, *args):
         print(args)
+        global bt_client_sock 
+        if bt_client_sock != None:
+            if args[0] == self.ids.left_motor_control:
+                print("this is left motor")
+                bt_client_sock.send("LM:" + str(args[1]))
+            elif args[0] == self.ids.right_motor_control:
+                print("this is right motor")
+                bt_client_sock.send("RM:" + str(args[1]))
+    
+    def on_enter(self, *args):
+        if self.manager.current == '': # first entry on program start seems to not update this
+            return
+        elif bt_client_sock == None:
+            self.manager.get_screen("control").ids.status_indicator.text = "Unpaired"
+        else:
+            self.manager.get_screen("control").ids.status_indicator.text = "Paired"
 
+    
 class BluetoothWindow(Screen):
 
     def __init__(self, **kw):
@@ -157,6 +178,8 @@ class BluetoothWindow(Screen):
             )
 
 
+
+
             self.service_scan_results.append(-1)
             self.service_scan_results[x] = ServiceInfo(tmp_name, tmp_addr, tmp_port, tmp_proto, tmp_button)
 
@@ -181,7 +204,7 @@ class BluetoothWindow(Screen):
                     try:
                         bt_client_sock = bluetooth.BluetoothSocket(proto)
                         bt_client_sock.connect((addr, port))
-                        bt_client_sock.send("Client says hello")
+                        bt_client_sock.send("SY: hello server")
                         message = bt_client_sock.recv(80)
                         print(message)
                         print("succesful connection to server")
@@ -197,7 +220,9 @@ class BluetoothWindow(Screen):
                 else: # begin unpair
                     try:
                         bt_client_sock.close( )
+                        bt_client_sock = None
                         print("succesful disconnection from server")
+                        self.ids.status_indicator.text = "Unpaired"
                     except:
                         print("unsuccesful disconnection from server")
                         return

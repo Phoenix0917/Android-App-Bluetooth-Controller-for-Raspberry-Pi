@@ -1,5 +1,6 @@
 #: import FadeTransition kivy.uix.screenmanager.FadeTransition
 #: import SlideTransition kivy.uix.screenmanager.SlideTransition
+#:import utils kivy.utils
 
 WindowManager: # root rule (can be any widget)
     transition: FadeTransition()
@@ -12,13 +13,17 @@ WindowManager: # root rule (can be any widget)
     FloatLayout:
         size: root.width, root.height
 
+        Image:
+            source: 'Images_Used/background6.jpg'
+            allow_stretch: True
+            keep_ratio: False
         Button:
-            text: 'Bluetooth'
-            pos_hint: {'x': 0.03, 'top': 0.97}
-            color: .8,.9,0,1
+            pos_hint: {'x': 0.01, 'top': 0.99}
+            background_normal: ''
+            background_color: '#266352'
             font_size: 10
             size_hint: .1, .1
-            on_release:
+            on_press:
                 root.manager.current = "bluetooth"  
             
             Image:
@@ -29,16 +34,24 @@ WindowManager: # root rule (can be any widget)
                 height: self.parent.height
                 keep_ratio: False
 
-        Button:
-            text: 'Fake Button'
-            pos_hint: {'right': 1, 'y': 0}
-            color: .8,.9,0,1
-            font_size: 32
-            size_hint: .4, .3 
+        Label:
+            id: status_indicator
+            text: "Unpaired"
+            font_size: self.width/8
+            size_hint: 0.12, 0.05
+            pos_hint: {'right': 0.99, 'top': 0.99}
+            color: '#b5f7e6'
+            canvas.before:
+                Color:
+                    rgba: utils.get_color_from_hex('#266352')
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
 
         ModifiedSlider:
-            min: -50
-            max: 50
+            id: left_motor_control
+            min: -100
+            max: 100
             step: 1
             value: ((self.max - self.min) / 2) + self.min
             orientation: "vertical"
@@ -48,8 +61,9 @@ WindowManager: # root rule (can be any widget)
             on_value: root.slide_it(*args)
 
         ModifiedSlider:
-            min: -50
-            max: 50
+            id: right_motor_control
+            min: -100
+            max: 100
             step: 1
             value: ((self.max - self.min) / 2) + self.min
             orientation: "vertical"
