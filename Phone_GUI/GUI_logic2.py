@@ -51,10 +51,10 @@ class ControlWindow(Screen):
         if bt_client_sock != None:
             if args[0] == self.ids.left_motor_control:
                 print("this is left motor")
-                bt_client_sock.send("LM:" + str(args[1]))
+                bt_client_sock.send("LM:" + str(args[1]) + '*')
             elif args[0] == self.ids.right_motor_control:
                 print("this is right motor")
-                bt_client_sock.send("RM:" + str(args[1]))
+                bt_client_sock.send("RM:" + str(args[1]) + '*')
     
     def on_enter(self, *args):
         if self.manager.current == '': # first entry on program start seems to not update this
@@ -222,7 +222,6 @@ class BluetoothWindow(Screen):
                         bt_client_sock.close( )
                         bt_client_sock = None
                         print("succesful disconnection from server")
-                        self.ids.status_indicator.text = "Unpaired"
                     except:
                         print("unsuccesful disconnection from server")
                         return
