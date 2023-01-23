@@ -76,31 +76,61 @@ WindowManager: # root rule (can be any widget)
 <BluetoothWindow>: # class rule
     name: "bluetooth"
 
+    Image:
+        source: 'Images_Used/background6.jpg'
+        allow_stretch: True
+        keep_ratio: False
+
     GridLayout:
         cols: 2
         
-        GridLayout:
-            rows: 5
+        FloatLayout:
             size: root.width, root.height
 
             Label:
-                text: "Bluetooth Screen"
-                size_hint: 1, 0.25
+                text: "Bluetooth Scanning"
+                size_hint: 1, .1
+                pos_hint: {'x': 0, 'top': 0.95}
                 font_size: self.width/20
+
+            Label:
+                id: PageStatus_LabelObj
+                text: "Ready"
+                font_size: self.width/8
+                size_hint: 0.24, 0.05
+                pos_hint: {'x': 0.01, 'top': 0.99}
+                color: '#b5f7e6'
+                canvas.before:
+                    Color:
+                        rgba: utils.get_color_from_hex('#266352')
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
             
             Button:
-                text: "Scan Devices"
-                font_size: self.width/20
+                text: "Scan\nDevices"
+                halign: 'center'
+                font_size: self.width/8
                 on_press: self.parent.parent.parent.scanDevice()
+                size_hint: 0.35, 0.2
+                pos_hint: {'x': 0.1, 'top': 0.8}
+                background_normal: ''
+                background_color: '#266352'
 
             Button:
-                text: "Scan Services"
-                font_size: self.width/20
-                on_press: self.parent.parent.parent.scanService()
-                background_color: (1, 0, 0, 1)
+                text: "Scan\nServices"
+                halign: 'center'
+                font_size: self.width/8
+                on_press: self.parent.parent.parent.update_status()
+                size_hint: 0.35, 0.2
+                pos_hint: {'x': 0.5, 'top': 0.8}
+                background_normal: ''
+                background_color: '#266352'
 
             GridLayout:
-                rows: 4
+                rows: 3
+                size_hint: 0.9, 0.2
+                pos_hint: {'x': 0.05, 'top': 0.6}
 
                 Label:
                     text: "Optional Service Search Criteria"
@@ -113,6 +143,13 @@ WindowManager: # root rule (can be any widget)
                         text: "Name"
                         size_hint: (0.3 , 1)
                         font_size: self.parent.width/30
+                        color: '#b5f7e6'
+                        canvas.before:
+                            Color:
+                                rgba: utils.get_color_from_hex('#266352')
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
 
                     TextInput:
                         id: Name
@@ -125,37 +162,91 @@ WindowManager: # root rule (can be any widget)
                         text: "Address"
                         size_hint: (0.3 , 1)
                         font_size: self.parent.width/30
+                        color: '#b5f7e6'
+                        canvas.before:
+                            Color:
+                                rgba: utils.get_color_from_hex('#266352')
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
 
                     TextInput:
                         id: Address
                         multiline: False
 
+            Label:
+                text: "error code for connecting?"
+                font_size: self.width/30
+                size_hint: 0.9, 0.05
+                pos_hint: {'x': 0.05, 'top': 0.35}
+                color: '#b5f7e6'
+                canvas.before:
+                    Color:
+                        rgba: utils.get_color_from_hex('#266352')
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
 
-                GridLayout:
-                    cols: 2
-                    Button:
-                        text: "+1 elem"
-                        on_press: root.increment_elem()
-                        
-                    Button:
-                        text: "-1 elem"
-                        on_press: root.decrement_elem()
+            Label:
+                text: "error code for connecting?"
+                font_size: self.width/30
+                size_hint: 0.9, 0.05
+                pos_hint: {'x': 0.05, 'top': 0.35}
+                color: '#b5f7e6'
+                canvas.before:
+                    Color:
+                        rgba: utils.get_color_from_hex('#266352')
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
 
             Button:
                 text: "Go Back"
                 font_size: '15dp'
                 on_release: app.root.current = "control"
+                background_normal: ''
+                background_color: '#266352'
+                size_hint: 0.8, 0.1
+                pos_hint: {'x': 0.1, 'top': 0.2}
         
-        ScrollView:
-            do_scroll_x: False
-            do_scroll_y: True
-            id: scrollie
+        FloatLayout:
 
-            GridLayout:
-                width: self.parent.width
-                id: grid1
-                size_hint_x: 1
-                size_hint_y: None
-                cols: 1
-                row_default_height: self.parent.height /4 
-                row_force_default: True
+            Label:
+                text: "displaying #"
+                size_hint: 0.9, 0.05
+                pos_hint: {'x': 0, 'top': 1}
+
+            Button:
+                text: "+1 elem"
+                size_hint: 0.45, 0.05
+                pos_hint: {'x': 0, 'top': 0.95}
+                on_press: root.increment_elem()
+
+            Button:
+                text: "-1 elem"
+                size_hint: 0.45, 0.05
+                pos_hint: {'x': 0.5, 'top': 0.95}
+                on_press: root.decrement_elem()
+
+
+            ScrollView:
+                do_scroll_x: False
+                do_scroll_y: True
+                id: ScanResults_ScrollViewObj
+                size_hint: 0.95, 0.85
+                pos_hint: {'x': 0, 'top': 0.9}
+                canvas.before:
+                    Color:
+                        rgba: utils.get_color_from_hex('#266352')
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+                GridLayout:
+                    width: self.parent.width
+                    id: grid1
+                    size_hint_x: 1
+                    size_hint_y: None
+                    cols: 1
+                    row_default_height: self.parent.height /4 
+                    row_force_default: True

@@ -8,6 +8,7 @@ from kivy.uix.slider import Slider
 from kivy.graphics import *
 from kivy.core.window import Window
 import bluetooth
+import threading
 
 bt_client_sock = None
 
@@ -89,7 +90,6 @@ class BluetoothWindow(Screen):
 
     
     def scanDevice(self):
-        #self.ids.grid1.rows = None
         print("Scanning for bluetooth devices:")
         devices = bluetooth.discover_devices(lookup_names = True, lookup_class = True)
         number_of_devices = len(devices)
@@ -102,6 +102,10 @@ class BluetoothWindow(Screen):
             print("Device Class: %s" % (device_class))
         self.populate_scroller(devices)
      
+    def update_status(self):
+        self.ids.PageStatus_LabelObj.text = "Scanning..."
+        threading.Thread(target=self.scanService).start()
+        #self.ids.PageStatus_LabelObj.text = "Ready"
     
     def scanService(self):
         print(self.ids.Name.text)
@@ -146,23 +150,19 @@ class BluetoothWindow(Screen):
 
 
         def resize(instance, value):
-            #print('My callback is call from', instance)
-            #print('and the a value changed to', value)
-            #self.ids.grid1.height = self.ids.scrollie.height * len(services) / self.num_elems
             print(self.ids.grid1.row_default_height)
             self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
-        #self.ids.scrollie.bind(height = resize)
         self.ids.grid1.bind(row_default_height = resize)
 
         def resize2(instance, value):
             self.ids.grid1.row_default_height = instance.height / self.num_elems_in_1screen
             self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
-        self.ids.scrollie.bind(height = resize2)
+        self.ids.ScanResults_ScrollViewObj.bind(height = resize2)
 
         for x in range(len(services)):
             if services[x]['name'] != None:
                 tmp_name = str(services[x]['name'])
-                tmp_name = tmp_name[2:len(tmp_name) - 2]
+                tmp_name = tmp_name[2:len(tmp_name) - 1]
             else:
                 tmp_name = "Unset Name"
             
@@ -187,6 +187,7 @@ class BluetoothWindow(Screen):
             
 
             def pair(instance):
+                self.ids.PageStatus_LabelObj.text = "Pairing..."
                 global bt_client_sock
                 for paired_service_index in range(len(self.service_scan_results)):
                     if self.service_scan_results[paired_service_index].button == instance: # found index corresponding with this button
@@ -210,20 +211,24 @@ class BluetoothWindow(Screen):
                         print("succesful connection to server")
                     except: 
                         print("unsuccesful connection to server")
+                        self.ids.PageStatus_LabelObj.text = "Ready"
                         return
                     instance.background_color= '#79f53b'
                     self.service_scan_results[paired_service_index].paired = True
                     for unpaired_service_index in range(len(self.service_scan_results)):
                         if unpaired_service_index != paired_service_index:
                             self.service_scan_results[unpaired_service_index].button.disabled = True
+                    self.ids.PageStatus_LabelObj.text = "Ready"
 
                 else: # begin unpair
+                    self.ids.PageStatus_LabelObj.text = "Unpairing"
                     try:
                         bt_client_sock.close( )
                         bt_client_sock = None
                         print("succesful disconnection from server")
                     except:
                         print("unsuccesful disconnection from server")
+                        self.ids.PageStatus_LabelObj.text = "Ready"
                         return
 
                     instance.background_color= [1, 1, 1, 1]
@@ -231,6 +236,8 @@ class BluetoothWindow(Screen):
                     for unpaired_service_index in range(len(self.service_scan_results)):
                         if unpaired_service_index != paired_service_index:
                             self.service_scan_results[unpaired_service_index].button.disabled = False
+                    self.ids.PageStatus_LabelObj.text = "Ready"
+
             self.service_scan_results[x].button.bind(on_press = pair)
 
 
@@ -266,13 +273,13 @@ class BluetoothWindow(Screen):
 
     def increment_elem (self):
         self.num_elems_in_1screen = self.num_elems_in_1screen + 1
-        self.ids.grid1.row_default_height = self.height / self.num_elems_in_1screen
+        self.ids.grid1.row_default_height = self.ids.ScanResults_ScrollViewObj.height / self.num_elems_in_1screen
         print (self.ids.grid1.row_default_height)
 
     def decrement_elem(self):
         if self.num_elems_in_1screen >= 2:
             self.num_elems_in_1screen = self.num_elems_in_1screen -1
-            self.ids.grid1.row_default_height = self.height / self.num_elems_in_1screen
+            self.ids.grid1.row_default_height = self.ids.ScanResults_ScrollViewObj.height / self.num_elems_in_1screen
             print (self.ids.grid1.row_default_height)
 
 
