@@ -1,3 +1,4 @@
+
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.lang import Builder
@@ -9,6 +10,11 @@ from kivy.graphics import *
 from kivy.core.window import Window
 import bluetooth
 import threading
+from kivy.clock import Clock
+
+from functools import partial
+import ThreadTracing
+import time
 
 bt_client_sock = None
 
@@ -28,6 +34,22 @@ class ModifiedSlider(Slider):
         if touch.grab_current == self: # checks if the current touch is the one that was dispatched for this widget
             self.dispatch('on_release') # starts on_release event
             return True
+
+class CustomButton(Button):
+    def __init__(self, name, addr, port, proto, **kwargs):
+        super(CustomButton, self).__init__(**kwargs)
+        # info paramters
+        self.name = name
+        self.addr = addr
+        self.port = port
+        self.proto = proto
+        self.paired = False
+        # button parameters
+        self.text = "Name:  " + name + '\nHost:  ' + addr + '\nPort:  ' + port + '\nProtocol:  ' + proto
+        self.size_hint_x = 1
+        self.halign = "left"
+        self.valign = "top"
+
 
 
 
@@ -104,6 +126,7 @@ class BluetoothWindow(Screen):
      
     def update_status(self):
         self.ids.PageStatus_LabelObj.text = "Scanning..."
+        #self.ids.ScanDevice.disabled = True
         threading.Thread(target=self.scanService).start()
         #self.ids.PageStatus_LabelObj.text = "Ready"
     
@@ -135,30 +158,37 @@ class BluetoothWindow(Screen):
 
         else:
             services = bluetooth.find_service()
-        
-        print("hi")
+
+        print("Completed Service Scan")
         print(len(services))
 
+
+        Clock.schedule_once(partial(self.update_service_UI, services)) # run next part on main kivy thread so it can modify GUI
+
+
+    def update_service_UI(self, services, dt):
         # clean out any prior widgets and data associated with them
         self.ids.grid1.clear_widgets()
         self.service_scan_results = []
-        #for x in range(len(self.ids.grid1.rows))
+        self.service_buttons = []
 
+        # sets number and sizing of rows in grid widget 
         self.ids.grid1.rows = len(services)
         self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
         print(len(services) / self.num_elems_in_1screen)
-
 
         def resize(instance, value):
             print(self.ids.grid1.row_default_height)
             self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
         self.ids.grid1.bind(row_default_height = resize)
 
+        # resize grid height and default height of rows when scrollview height changes
         def resize2(instance, value):
             self.ids.grid1.row_default_height = instance.height / self.num_elems_in_1screen
-            self.ids.grid1.height = self.ids.grid1.row_default_height * len(services)
+            self.ids.grid1.height = self.ids.grid1.row_default_height * len(services) # can probably be removed 
         self.ids.ScanResults_ScrollViewObj.bind(height = resize2)
 
+        # for each service found create a custom button which stores info with it
         for x in range(len(services)):
             if services[x]['name'] != None:
                 tmp_name = str(services[x]['name'])
@@ -170,106 +200,150 @@ class BluetoothWindow(Screen):
             tmp_port = str(services[x]['port'])
             tmp_proto = str(services[x]['protocol'])
 
-            tmp_button = Button(
-                text= "Name:  " + tmp_name + '\nHost:  ' + tmp_addr + '\nPort:  ' + tmp_port + '\nProtocol:  ' + tmp_proto,
-                size_hint_x = 1,
-                halign= "left",
-                valign= "top"
-            )
+            self.service_buttons.append(-1)
+            self.service_buttons[x] = CustomButton(tmp_name, tmp_addr, tmp_port, tmp_proto)
+            self.service_buttons[x].bind(size = self.service_buttons[x].setter('text_size')) # not entirely sure how this works for adjusting font size
+            self.service_buttons[x].bind(on_press = self.pair)
+
+            # change the size of each button's text if the windows size changes
+            def resize_button_text_if_window_changes(button, new_width):
+                button.font_size = button.width / (5 * self.num_elems_in_1screen)
+                if (self.num_elems_in_1screen == 1):
+                    button.font_size = button.width / (8.5 * self.num_elems_in_1screen)
+            self.service_buttons[x].bind(width=resize_button_text_if_window_changes) # when info.height changes run this routine
+
+            self.ids.grid1.add_widget(self.service_buttons[x])
+
+        # change the size of each button's text if the number of elements changes in the grid
+        def resize_label_text_if_elements_changes(grid, new_width):
+            for x in range(len(self.service_buttons)):
+                self.service_buttons[x].font_size = self.service_buttons[x].width / (5 * self.num_elems_in_1screen)
+                if (self.num_elems_in_1screen == 1):
+                    self.service_buttons[x].font_size = self.service_buttons[x].width / (8.5 * self.num_elems_in_1screen)
+        self.ids.grid1.bind(row_default_height = resize_label_text_if_elements_changes)
+        self.ids.PageStatus_LabelObj.text = "Ready"
 
 
 
+    def pair(self, button_inst):
+        # disable all buttons
+        self.ids.PageStatus_LabelObj.text = "Pairing..."
+        for button_other in self.service_buttons:
+            button_other.disabled = True
+        threading.Thread(target=self.pair_logic, args = [button_inst]).start()
+        #return
+        #print(x)
+        #Clock.schedule_once(partial(self.update_pair_UI))
 
-            self.service_scan_results.append(-1)
-            self.service_scan_results[x] = ServiceInfo(tmp_name, tmp_addr, tmp_port, tmp_proto, tmp_button)
 
-            self.service_scan_results[x].button.bind(size=self.service_scan_results[x].button.setter('text_size')) 
-            
+    def pair_logic(self, button_inst):
+        
+        global bt_client_sock
+        if button_inst.paired == False: # begin pair attempt
+            if button_inst.proto == 'L2CAP':
+                proto = bluetooth.L2CAP
+            elif button_inst.proto == 'RFCOMM':
+                proto = bluetooth.RFCOMM
+            else:
+                print("unsupported socket type")
+            addr = button_inst.addr
+            port = int(button_inst.port)
 
-            def pair(instance):
-                self.ids.PageStatus_LabelObj.text = "Pairing..."
-                global bt_client_sock
-                for paired_service_index in range(len(self.service_scan_results)):
-                    if self.service_scan_results[paired_service_index].button == instance: # found index corresponding with this button
-                        break
+            try:
+                bt_client_sock = bluetooth.BluetoothSocket(proto)
 
-                if self.service_scan_results[paired_service_index].paired == False: # begin pair attempt
-                    if self.service_scan_results[paired_service_index].proto == 'L2CAP':
-                        proto = bluetooth.L2CAP
-                    elif self.service_scan_results[paired_service_index].proto == 'RFCOMM':
-                        proto = bluetooth.RFCOMM
-                    else:
-                        print("unsupported socket type")
-                    addr = self.service_scan_results[paired_service_index].addr
-                    port = int(self.service_scan_results[paired_service_index].port)
+                connection_status = [] # use a list here because it is mutable (updates everywhere regardless of function/thread called in)
+                def connect_attempt(aList, addr, port):
                     try:
-                        bt_client_sock = bluetooth.BluetoothSocket(proto)
                         bt_client_sock.connect((addr, port))
+                        aList.append("Connected")
+                    except:
+                        aList.append("Unconnected")
+                print(connection_status)
+                killable_thread = ThreadTracing.thread_with_trace(target = connect_attempt, args=[connection_status, addr, port])
+                killable_thread.start()
+                
+                connect_attempt_start_time = time.perf_counter()
+                duration = 0
+                while len(connection_status) == 0 and duration < 10: # essentially a busy wait but checking for change in connection status, probably change eventually           
+                    duration = time.perf_counter() - connect_attempt_start_time
+                    print(len(connection_status))
+                    time.sleep(0.5)
+
+                print(connection_status)
+                if connection_status[0] == "Connected":
+                    try:
+                        # either send or recv can stall UI update indefinetaly (probably add another busy wait here)
                         bt_client_sock.send("SY: hello server")
                         message = bt_client_sock.recv(80)
                         print(message)
                         print("succesful connection to server")
-                    except: 
-                        print("unsuccesful connection to server")
-                        self.ids.PageStatus_LabelObj.text = "Ready"
-                        return
-                    instance.background_color= '#79f53b'
-                    self.service_scan_results[paired_service_index].paired = True
-                    for unpaired_service_index in range(len(self.service_scan_results)):
-                        if unpaired_service_index != paired_service_index:
-                            self.service_scan_results[unpaired_service_index].button.disabled = True
-                    self.ids.PageStatus_LabelObj.text = "Ready"
-
-                else: # begin unpair
-                    self.ids.PageStatus_LabelObj.text = "Unpairing"
-                    try:
-                        bt_client_sock.close( )
-                        bt_client_sock = None
-                        print("succesful disconnection from server")
+                        Clock.schedule_once(partial(self.pair_success, button_inst))
                     except:
-                        print("unsuccesful disconnection from server")
-                        self.ids.PageStatus_LabelObj.text = "Ready"
-                        return
-
-                    instance.background_color= [1, 1, 1, 1]
-                    self.service_scan_results[paired_service_index].paired = False
-                    for unpaired_service_index in range(len(self.service_scan_results)):
-                        if unpaired_service_index != paired_service_index:
-                            self.service_scan_results[unpaired_service_index].button.disabled = False
-                    self.ids.PageStatus_LabelObj.text = "Ready"
-
-            self.service_scan_results[x].button.bind(on_press = pair)
-
-
-
-
-
-            def resize_label_text_if_window_changes(button, new_width):
-                button.font_size = button.width / (5 * self.num_elems_in_1screen)
-                if (self.num_elems_in_1screen == 1):
-                    button.font_size = button.width / (8.5 * self.num_elems_in_1screen)
-            self.service_scan_results[x].button.bind(width=resize_label_text_if_window_changes) # when info.height changes run this routine
-            self.ids.grid1.add_widget(self.service_scan_results[x].button)
-
-        def resize_label_text_if_elements_changes(grid, new_width):
-            for x in range(len(self.service_scan_results)):
-                self.service_scan_results[x].button.font_size = self.service_scan_results[x].button.width / (5 * self.num_elems_in_1screen)
-                if (self.num_elems_in_1screen == 1):
-                    self.service_scan_results[x].button.font_size = self.service_scan_results[x].button.width / (8.5 * self.num_elems_in_1screen)
-                print("hi")
-        self.ids.grid1.bind(row_default_height = resize_label_text_if_elements_changes)
+                        print("unsuccesful connection to server: couldn't confirm with message")
+                        bt_client_sock.close()
+                        bt_client_sock = None
+                        Clock.schedule_once(self.pair_unsuccess)
+                elif connection_status[0] == "Unconnected":
+                    print("unsuccesful connection to server: invalid params")
+                    bt_client_sock.close()
+                    bt_client_sock = None
+                    Clock.schedule_once(self.pair_unsuccess)
+                else:
+                    killable_thread.kill()
+                    killable_thread.join()
+                    print("unsuccesful connection to server: timeout")
+                    bt_client_sock.close()
+                    bt_client_sock = None
+                    Clock.schedule_once(self.pair_unsuccess)
+            except:
+                print("unsuccesful connection to server: socket not created")
+                bt_client_sock = None
+                Clock.schedule_once(self.pair_unsuccess)
 
 
-    def pair(instance, value):
-        # unpair any previous pair
-        instance.color=(1, 0, 0, 1)
+        else: # begin unpair
+            self.ids.PageStatus_LabelObj.text = "Unpairing"
+            try:
+                bt_client_sock.close( )
+                bt_client_sock = None
+                print("succesful disconnection from server")
+                Clock.schedule_once(partial(self.unpair_success, button_inst))
+            except:
+                print("unsuccesful disconnection from server")
+                Clock.schedule_once(self.unpair_unsucess)
 
-        
-    '''
-    def change_window(instance, value):
-        instance.ids.grid1.row_default_height = instance.height / instance.num_elems_in_1screen
-    BluetoothWindow.bind(height = change_window)
-    '''
+
+    def pair_success(self, button_inst, dt):
+        button_inst.background_color= '#79f53b'
+        button_inst.paired = True
+        button_inst.disabled = False
+
+        # redundant?
+        for button_other in self.service_buttons:
+            if button_other != button_inst:
+                button_other.disabled = True
+
+        self.ids.PageStatus_LabelObj.text = "Ready"
+
+    def pair_unsuccess(self, dt):
+        for button_other in self.service_buttons:
+            button_other.disabled = False
+
+        self.ids.PageStatus_LabelObj.text = "Ready"
+
+    def unpair_success(self, button_inst, dt):
+        button_inst.background_color = [1, 1, 1, 1]
+        button_inst.paired = False
+
+        for button in self.service_buttons:
+            button.disabled = False
+
+        self.ids.PageStatus_LabelObj.text = "Ready"
+
+    def unpair_unsucess(self, dt):
+        self.ids.PageStatus_LabelObj.text = "Ready"
+
 
     def increment_elem (self):
         self.num_elems_in_1screen = self.num_elems_in_1screen + 1

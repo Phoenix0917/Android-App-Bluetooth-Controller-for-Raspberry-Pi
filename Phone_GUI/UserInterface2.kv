@@ -108,6 +108,7 @@ WindowManager: # root rule (can be any widget)
                         pos: self.pos
             
             Button:
+                id: ScanDevice
                 text: "Scan\nDevices"
                 halign: 'center'
                 font_size: self.width/8
@@ -199,6 +200,12 @@ WindowManager: # root rule (can be any widget)
                     Rectangle:
                         size: self.size
                         pos: self.pos
+            
+            Button:
+                text: "Cancel Pair"
+                font_size: '15dp'
+                size_hint: 0.8, 0.1
+                pos_hint: {'x': 0.08, 'top': 0.3}
 
             Button:
                 text: "Go Back"
