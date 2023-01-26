@@ -16,6 +16,10 @@ from functools import partial
 import ThreadTracing
 import time
 
+
+from kivy.core.window import Window
+Window.size = (555, 270)
+
 bt_client_sock = None
 
 
@@ -45,7 +49,7 @@ class CustomButton(Button):
         self.proto = proto
         self.paired = False
         # button parameters
-        self.text = "Name:  " + name + '\nHost:  ' + addr + '\nPort:  ' + port + '\nProtocol:  ' + proto
+        self.text = "    Name:  " + name + '\n    Host:  ' + addr + '\n    Port:  ' + port + '\n    Protocol:  ' + proto
         self.size_hint_x = 1
         self.halign = "left"
         self.valign = "top"
@@ -126,7 +130,8 @@ class BluetoothWindow(Screen):
      
     def update_status(self):
         self.ids.PageStatus_LabelObj.text = "Scanning..."
-        #self.ids.ScanDevice.disabled = True
+        self.ids.ScanDevice_ButtonObj.disabled = True
+        self.ids.ScanService_ButtonObj.disabled = True
         threading.Thread(target=self.scanService).start()
         #self.ids.PageStatus_LabelObj.text = "Ready"
     
@@ -207,9 +212,9 @@ class BluetoothWindow(Screen):
 
             # change the size of each button's text if the windows size changes
             def resize_button_text_if_window_changes(button, new_width):
-                button.font_size = button.width / (5 * self.num_elems_in_1screen)
-                if (self.num_elems_in_1screen == 1):
-                    button.font_size = button.width / (8.5 * self.num_elems_in_1screen)
+                button.font_size = button.width / (7 * self.num_elems_in_1screen)
+                if (self.num_elems_in_1screen <= 2 ):
+                    button.font_size = button.width / (10 * self.num_elems_in_1screen)
             self.service_buttons[x].bind(width=resize_button_text_if_window_changes) # when info.height changes run this routine
 
             self.ids.grid1.add_widget(self.service_buttons[x])
@@ -217,11 +222,13 @@ class BluetoothWindow(Screen):
         # change the size of each button's text if the number of elements changes in the grid
         def resize_label_text_if_elements_changes(grid, new_width):
             for x in range(len(self.service_buttons)):
-                self.service_buttons[x].font_size = self.service_buttons[x].width / (5 * self.num_elems_in_1screen)
-                if (self.num_elems_in_1screen == 1):
-                    self.service_buttons[x].font_size = self.service_buttons[x].width / (8.5 * self.num_elems_in_1screen)
+                self.service_buttons[x].font_size = self.service_buttons[x].width / (7 * self.num_elems_in_1screen)
+                if (self.num_elems_in_1screen <= 2):
+                    self.service_buttons[x].font_size = self.service_buttons[x].width / (10 * self.num_elems_in_1screen)
         self.ids.grid1.bind(row_default_height = resize_label_text_if_elements_changes)
         self.ids.PageStatus_LabelObj.text = "Ready"
+        self.ids.ScanDevice_ButtonObj.disabled = False
+        self.ids.ScanService_ButtonObj.disabled = False
 
 
 
@@ -348,12 +355,14 @@ class BluetoothWindow(Screen):
     def increment_elem (self):
         self.num_elems_in_1screen = self.num_elems_in_1screen + 1
         self.ids.grid1.row_default_height = self.ids.ScanResults_ScrollViewObj.height / self.num_elems_in_1screen
+        self.ids.NumResults_LabelObj.text = "(" + str(self.num_elems_in_1screen) + " per page)"
         print (self.ids.grid1.row_default_height)
 
     def decrement_elem(self):
         if self.num_elems_in_1screen >= 2:
             self.num_elems_in_1screen = self.num_elems_in_1screen -1
             self.ids.grid1.row_default_height = self.ids.ScanResults_ScrollViewObj.height / self.num_elems_in_1screen
+            self.ids.NumResults_LabelObj.text = "(" + str(self.num_elems_in_1screen) + " per page)"
             print (self.ids.grid1.row_default_height)
 
 
