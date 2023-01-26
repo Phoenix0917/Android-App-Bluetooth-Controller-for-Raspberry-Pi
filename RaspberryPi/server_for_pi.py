@@ -30,6 +30,7 @@ def data_interpreter(val):
     command = val[0:2]
     info = val[3: val.find('*')]
     print(command)
+    print(info)
     if command == 'LM':
         velocity = float(info)
         if velocity <= 0:
@@ -54,8 +55,12 @@ def data_interpreter(val):
         if info == 'hello':
             print("successful BT connection")
         elif info == 'kill':
-            server_sock.close()
-        
+            try:
+                server_sock.close()
+                os.system("sudo shutdown -h now")
+            except:
+                os.system("sudo shutdown -h now")
+                
     return
 
 
@@ -79,6 +84,7 @@ while True:
     
 
     #client_sock.close( )
+    stop_advertising(server_sock)
     server_sock.close( )
     LMpwm.ChangeDutyCycle(0)
     RMpwm.ChangeDutyCycle(0)

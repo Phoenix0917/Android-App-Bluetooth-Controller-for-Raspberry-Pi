@@ -71,6 +71,16 @@ class ServiceInfo:
 class ControlWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
+    
+    def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
+        if self.manager.current == '': # first entry on program start seems to not update this
+            return
+        elif bt_client_sock == None:
+            self.manager.get_screen("control").ids.status_indicator.text = "Unpaired"
+            self.manager.get_screen("control").ids.KillPi_ButtonObj.disabled = True
+        else:
+            self.manager.get_screen("control").ids.status_indicator.text = "Paired"
+            self.manager.get_screen("control").ids.KillPi_ButtonObj.disabled = False
 
     def slide_it(self, *args):
         print(args)
@@ -82,39 +92,35 @@ class ControlWindow(Screen):
             elif args[0] == self.ids.right_motor_control:
                 print("this is right motor")
                 bt_client_sock.send("RM:" + str(args[1]) + '*')
-    
-    def on_enter(self, *args):
-        if self.manager.current == '': # first entry on program start seems to not update this
-            return
-        elif bt_client_sock == None:
-            self.manager.get_screen("control").ids.status_indicator.text = "Unpaired"
-        else:
-            self.manager.get_screen("control").ids.status_indicator.text = "Paired"
+
+    def kill_pi_power(self):
+        print("sending kill command")
+        bt_client_sock.send("SY:kill*")
 
     
 class BluetoothWindow(Screen):
 
     def __init__(self, **kw):
         super().__init__(**kw)
-        self.info = []
-        self.service_scan_results = []
-        self.num_elems_in_1screen = 4
+        self.device_buttons = []
+        self.service_buttons = []
+        self.num_elems_in_1screen = 3
     '''
     def __init__(self, **kw):
         super().__init__(**kw)
         self.current_scroller_population = []
     '''
-    def populate_scroller(self, devices):
-        print(self.ids.grid1.rows)
-        self.ids.grid1.rows = len(devices)
-        print(self.ids.grid1.rows)
-        for x in range(len(devices)):
-            info = Label(
-                text = str(devices[x][1]) + '\n' + str(devices[x][0]) + '\n' + str(devices[x][2])
-            )
-            self.ids.grid1.add_widget(info)
 
-    
+    def update_results(self, scan_type):
+        self.ids.PageStatus_LabelObj.text = "Scanning..."
+        self.ids.ScanDevice_ButtonObj.disabled = True
+        self.ids.ScanService_ButtonObj.disabled = True
+        if scan_type == 'service':
+            threading.Thread(target=self.scanService).start()
+        elif scan_type == 'device':
+            threading.Thread(target=self.scanDevice).start()
+
+
     def scanDevice(self):
         print("Scanning for bluetooth devices:")
         devices = bluetooth.discover_devices(lookup_names = True, lookup_class = True)
@@ -126,15 +132,63 @@ class BluetoothWindow(Screen):
             print("Device Name: %s" % (name))
             print("Device MAC Address: %s" % (addr))
             print("Device Class: %s" % (device_class))
-        self.populate_scroller(devices)
+        Clock.schedule_once(partial(self.update_device_UI, devices)) 
+
+    def update_device_UI(self, devices, dt):
+        # clean out any prior widgets and data associated with them
+        self.ids.grid1.clear_widgets()
+        self.device_buttons = []
+        self.service_buttons = []
+
+        # sets number and sizing of rows in grid widget 
+        self.ids.grid1.rows = len(devices)
+        self.ids.grid1.height = self.ids.grid1.row_default_height * len(devices)
+        print(len(devices) / self.num_elems_in_1screen)
+
+        def resize(instance, value):
+            print(self.ids.grid1.row_default_height)
+            self.ids.grid1.height = self.ids.grid1.row_default_height * len(devices)
+        self.ids.grid1.bind(row_default_height = resize)
+
+        # resize grid height and default height of rows when scrollview height changes
+        def resize2(instance, value):
+            self.ids.grid1.row_default_height = instance.height / self.num_elems_in_1screen
+            self.ids.grid1.height = self.ids.grid1.row_default_height * len(devices) # can probably be removed 
+        self.ids.ScanResults_ScrollViewObj.bind(height = resize2)
+
+        for x in range(len(devices)):
+            self.device_buttons.append(-1)
+            self.device_buttons[x] = Button(
+                text = str("    Name: " + devices[x][1]) + '\n    Addr: ' + str(devices[x][0]) + '\n    Class: ' + str(devices[x][2]),
+                disabled = True,
+                disabled_color = [1, 1, 1, 1],
+                halign = "left",
+                valign = "top",
+                size_hint_x = 1
+            )
+            # change the size of each button's text if the windows size changes (button width changes if window width changes)
+            def resize_button_text_if_window_changes(button, new_width):
+                button.font_size = button.width / (7 * self.num_elems_in_1screen)
+                if (self.num_elems_in_1screen <= 2 ):
+                    button.font_size = button.width / (10 * self.num_elems_in_1screen)
+            self.device_buttons[x].bind(width=resize_button_text_if_window_changes) # when button width changes run this routine
+
+            self.ids.grid1.add_widget(self.device_buttons[x])
+            self.device_buttons[x].bind(size =  self.device_buttons[x].setter('text_size')) # moves text to left side of button
+
+        # change the size of each button's text if the number of elements changes in the grid 
+        def resize_label_text_if_elements_changes(grid, new_width):
+            for x in range(len(self.device_buttons)):
+                self.device_buttons[x].font_size = self.device_buttons[x].width / (7 * self.num_elems_in_1screen)
+                if (self.num_elems_in_1screen <= 2):
+                    self.device_buttons[x].font_size = self.device_buttons[x].width / (10 * self.num_elems_in_1screen)
+        self.ids.grid1.bind(row_default_height = resize_label_text_if_elements_changes)
+
+        self.ids.PageStatus_LabelObj.text = "Ready"
+        self.ids.ScanDevice_ButtonObj.disabled = False
+        self.ids.ScanService_ButtonObj.disabled = False
+
      
-    def update_status(self):
-        self.ids.PageStatus_LabelObj.text = "Scanning..."
-        self.ids.ScanDevice_ButtonObj.disabled = True
-        self.ids.ScanService_ButtonObj.disabled = True
-        threading.Thread(target=self.scanService).start()
-        #self.ids.PageStatus_LabelObj.text = "Ready"
-    
     def scanService(self):
         print(self.ids.Name.text)
         print(self.ids.Address.text)
@@ -174,7 +228,7 @@ class BluetoothWindow(Screen):
     def update_service_UI(self, services, dt):
         # clean out any prior widgets and data associated with them
         self.ids.grid1.clear_widgets()
-        self.service_scan_results = []
+        self.device_buttons = []
         self.service_buttons = []
 
         # sets number and sizing of rows in grid widget 
@@ -210,7 +264,7 @@ class BluetoothWindow(Screen):
             self.service_buttons[x].bind(size = self.service_buttons[x].setter('text_size')) # not entirely sure how this works for adjusting font size
             self.service_buttons[x].bind(on_press = self.pair)
 
-            # change the size of each button's text if the windows size changes
+            # change the size of each button's text if the windows size changes (button width changes if window width changes)
             def resize_button_text_if_window_changes(button, new_width):
                 button.font_size = button.width / (7 * self.num_elems_in_1screen)
                 if (self.num_elems_in_1screen <= 2 ):
@@ -280,12 +334,43 @@ class BluetoothWindow(Screen):
                 print(connection_status)
                 if connection_status[0] == "Connected":
                     try:
-                        # either send or recv can stall UI update indefinetaly (probably add another busy wait here)
-                        bt_client_sock.send("SY: hello server")
-                        message = bt_client_sock.recv(80)
-                        print(message)
-                        print("succesful connection to server")
-                        Clock.schedule_once(partial(self.pair_success, button_inst))
+                        message_status = []
+                        def send_recv_attempt(aList):
+                            try:
+                                bt_client_sock.send("SY: hello server")
+                                message = bt_client_sock.recv(80)
+                                print(message)
+                                aList.append("Received")
+                            except:
+                                aList.append("Failed")
+
+                        print(message_status)
+                        killable_thread_msging = ThreadTracing.thread_with_trace(target = send_recv_attempt, args=[message_status])
+                        killable_thread_msging.start()
+                        
+                        send_recv_attempt_start_time = time.perf_counter()
+                        duration = 0
+                        while len(message_status) == 0 and duration < 10: # essentially a busy wait but checking for change in message reception status, probably change eventually           
+                            duration = time.perf_counter() - send_recv_attempt_start_time
+                            print(len(message_status))
+                            time.sleep(0.5)
+                        
+                        if message_status[0] == "Received":
+                            print("succesful connection to server")
+                            Clock.schedule_once(partial(self.pair_success, button_inst))
+                        elif message_status[0] == "Failed":
+                            print("unsuccesful connection to server: message send/recv failed")
+                            bt_client_sock.close()
+                            bt_client_sock = None
+                            Clock.schedule_once(self.pair_unsuccess)
+                        else:
+                            killable_thread_msging.kill()
+                            killable_thread_msging.join()
+                            print("unsuccesful connection to server: message send/recv timeout")
+                            bt_client_sock.close()
+                            bt_client_sock = None
+                            Clock.schedule_once(self.pair_unsuccess)
+                        
                     except:
                         print("unsuccesful connection to server: couldn't confirm with message")
                         bt_client_sock.close()
@@ -299,7 +384,7 @@ class BluetoothWindow(Screen):
                 else:
                     killable_thread.kill()
                     killable_thread.join()
-                    print("unsuccesful connection to server: timeout")
+                    print("unsuccesful connection to server: socket connection timeout")
                     bt_client_sock.close()
                     bt_client_sock = None
                     Clock.schedule_once(self.pair_unsuccess)

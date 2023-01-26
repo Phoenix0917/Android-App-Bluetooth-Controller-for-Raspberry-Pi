@@ -50,13 +50,15 @@ WindowManager: # root rule (can be any widget)
                     pos: self.pos
 
         Button:
+            id: KillPi_ButtonObj
             pos_hint: {'right': 0.99, 'top': 0.99}
             background_normal: ''
             background_color: '#266352'
             font_size: 10
             size_hint: .125, .125
-            #on_press:
-                #root.manager.current = "bluetooth"  
+            disabled: True
+            on_press:
+                self.parent.parent.kill_pi_power()
             
             Image:
                 source: 'Images_Used/project2.png'
@@ -130,7 +132,7 @@ WindowManager: # root rule (can be any widget)
                 text: "Scan\nDevices"
                 halign: 'center'
                 font_size: self.width/8
-                on_press: self.parent.parent.parent.scanDevice()
+                on_press: self.parent.parent.parent.update_results("device")
                 size_hint: 0.35, 0.15
                 pos_hint: {'x': 0.1, 'top': 0.75}
                 background_normal: ''
@@ -141,7 +143,7 @@ WindowManager: # root rule (can be any widget)
                 text: "Scan\nServices"
                 halign: 'center'
                 font_size: self.width/8
-                on_press: self.parent.parent.parent.update_status()
+                on_press: self.parent.parent.parent.update_results("service")
                 size_hint: 0.35, 0.15
                 pos_hint: {'x': 0.5, 'top': 0.75}
                 background_normal: ''
@@ -229,7 +231,7 @@ WindowManager: # root rule (can be any widget)
 
             Label:
                 id: NumResults_LabelObj
-                text: "(4 per page)"
+                text: "(3 per page)"
                 size_hint: 0.5, 0.05
                 pos_hint: {'x': 0.6, 'top': 0.99}
                 font_size: self.width/15
@@ -268,5 +270,5 @@ WindowManager: # root rule (can be any widget)
                     size_hint_x: 1
                     size_hint_y: None
                     cols: 1
-                    row_default_height: self.parent.height /4 
+                    row_default_height: self.parent.height / 3 
                     row_force_default: True

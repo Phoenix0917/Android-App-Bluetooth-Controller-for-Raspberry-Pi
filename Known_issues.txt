@@ -1,0 +1,3 @@
+GUI program crashes if server goes down
+bt socket creation does not mean it is sucessfully connected to a server, this must be changed in code
+Using busy waiting in two spots marked
