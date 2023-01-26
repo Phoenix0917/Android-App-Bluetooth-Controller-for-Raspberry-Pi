@@ -1,3 +1,4 @@
+#For nic dev only: before running, in terminal activate venv by doing snrdsn\Scripts\activate
 
 from kivy.app import App
 from kivy.uix.widget import Widget
