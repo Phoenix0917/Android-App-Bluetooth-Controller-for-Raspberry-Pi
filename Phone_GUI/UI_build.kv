@@ -80,6 +80,9 @@ WindowManager: # root rule (can be any widget)
             cursor_size: self.width / 1.5 , self.width / 1.5
             on_value: root.slide_it(*args)
 
+        Label:
+            text: "Left Motor Value " + str(left_motor_control.value) + "\n" + "Right Motor Value " + str(right_motor_control.value)
+
         ModifiedSlider:
             id: right_motor_control
             min: -100
