@@ -17,8 +17,8 @@ import ThreadTracing
 import time
 
 
-#from kivy.core.window import Window
-#Window.size = (555, 270)
+from kivy.core.window import Window
+Window.size = (555, 270)
 
 bt_client_sock = None
 
