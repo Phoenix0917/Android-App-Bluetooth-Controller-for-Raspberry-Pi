@@ -1,0 +1,277 @@
+#: import FadeTransition kivy.uix.screenmanager.FadeTransition
+#: import SlideTransition kivy.uix.screenmanager.SlideTransition
+#:import utils kivy.utils
+
+WindowManager: # root rule (can be any widget)
+    transition: FadeTransition()
+    ControlWindow: # class inside window manager
+    BluetoothWindow: # class inside window manager
+
+<ControlWindow>: # class rule
+    name: "control"
+
+    FloatLayout:
+        size: root.width, root.height
+
+        Image:
+            source: 'Images_Used/background.jpg'
+            allow_stretch: True
+            keep_ratio: False
+            
+        Button:
+            pos_hint: {'x': 0.01, 'top': 0.90}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .125, .125
+            on_press:
+                root.manager.current = "bluetooth"  
+            
+            Image:
+                source: 'Images_Used/BT_Before.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width
+                height: self.parent.height
+                keep_ratio: False
+
+        Label:
+            id: status_indicator
+            text: "Unpaired"
+            font_size: self.width/8
+            size_hint: 0.15, 0.075
+            pos_hint: {'x': 0.01, 'top': 0.99}
+            color: '#b5f7e6'
+            canvas.before:
+                Color:
+                    rgba: utils.get_color_from_hex('#266352')
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+        Button:
+            id: KillPi_ButtonObj
+            pos_hint: {'right': 0.99, 'top': 0.99}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .125, .125
+            disabled: True
+            on_press:
+                self.parent.parent.kill_pi_power()
+            
+            Image:
+                source: 'Images_Used/power.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+
+        ModifiedSlider:
+            id: left_motor_control
+            min: -100
+            max: 100
+            step: 1
+            value: ((self.max - self.min) / 2) + self.min
+            orientation: "vertical"
+            pos_hint: {'x': 0.25, 'y': .1}
+            size_hint: .1, .8 
+            cursor_size: self.width / 1.5 , self.width / 1.5
+            on_value: root.slide_it(*args)
+
+        Label:
+            text: "Left Motor Value " + str(left_motor_control.value) + "\n" + "Right Motor Value " + str(right_motor_control.value)
+
+        ModifiedSlider:
+            id: right_motor_control
+            min: -100
+            max: 100
+            step: 1
+            value: ((self.max - self.min) / 2) + self.min
+            orientation: "vertical"
+            pos_hint: {'right': 0.75, 'y': .1}
+            size_hint: .1, .8 
+            cursor_size: self.width / 1.5 , self.width / 1.5
+            on_value: root.slide_it(*args)
+
+
+<BluetoothWindow>: # class rule
+    name: "bluetooth"
+
+    Image:
+        source: 'Images_Used/background.jpg'
+        allow_stretch: True
+        keep_ratio: False
+
+    GridLayout:
+        cols: 2
+        
+        FloatLayout:
+            size: root.width, root.height
+
+            Label:
+                text: "Bluetooth Scanning"
+                size_hint: 1, .1
+                pos_hint: {'x': 0, 'top': 0.90}
+                font_size: self.width/15
+
+            Label:
+                id: PageStatus_LabelObj
+                text: "Ready"
+                font_size: self.width/8
+                size_hint: 0.3, 0.075
+                pos_hint: {'x': 0.01, 'top': 0.99}
+                color: '#b5f7e6'
+                canvas.before:
+                    Color:
+                        rgba: utils.get_color_from_hex('#266352')
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+            
+            Button:
+                id: ScanDevice_ButtonObj
+                text: "Scan\nDevices"
+                halign: 'center'
+                font_size: self.width/8
+                on_press: self.parent.parent.parent.scan_paired()
+                size_hint: 0.35, 0.15
+                pos_hint: {'x': 0.1, 'top': 0.75}
+                background_normal: ''
+                background_color: '#266352'
+
+            Button:
+                id: ScanService_ButtonObj
+                text: "Scan\nServices"
+                halign: 'center'
+                font_size: self.width/8
+                on_press: self.parent.parent.parent.update_results("service")
+                size_hint: 0.35, 0.15
+                pos_hint: {'x': 0.5, 'top': 0.75}
+                background_normal: ''
+                background_color: '#266352'
+
+            GridLayout:
+                rows: 3
+                size_hint: 0.9, 0.3
+                pos_hint: {'x': 0.05, 'top': 0.58}
+
+                Label:
+                    text: "Optional Service Search Criteria"
+                    font_size: self.width/20
+
+                GridLayout:
+                    cols: 2
+
+                    Label:
+                        text: "Name"
+                        size_hint: (0.4 , 1)
+                        font_size: self.parent.width/25
+                        color: '#b5f7e6'
+                        canvas.before:
+                            Color:
+                                rgba: utils.get_color_from_hex('#266352')
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+
+                    TextInput:
+                        id: Name
+                        multiline: False
+                        font_size: self.width/18
+
+                GridLayout:
+                    cols: 2
+
+                    Label:
+                        text: "Address"
+                        size_hint: (0.4 , 1)
+                        font_size: self.parent.width/25
+                        color: '#b5f7e6'
+                        canvas.before:
+                            Color:
+                                rgba: utils.get_color_from_hex('#266352')
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+
+                    TextInput:
+                        id: Address
+                        multiline: False
+                        font_size: self.width/18
+
+            Button:
+                text: "Go Back"
+                font_size: self.width/ 20
+                on_release: app.root.current = "control"
+                background_normal: ''
+                background_color: '#266352'
+                size_hint: 0.8, 0.1
+                pos_hint: {'x': 0.1, 'top': 0.20}
+
+
+            Image:
+                source: 'Images_Used/BNT_Logo.png'
+                pos_hint: {'x': 0.01, 'y': 0.01}
+                size_hint: 0.175, .075
+                keep_ratio: True
+                canvas.before:
+                    Color:
+                        rgba: utils.get_color_from_hex('#010623')
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+        
+        FloatLayout:
+
+            Label:
+                text: "Results"
+                size_hint: 0.5, 0.05
+                pos_hint: {'x': 0, 'top': 0.99}
+                font_size: self.width/10
+
+            Label:
+                id: NumResults_LabelObj
+                text: "(3 per page)"
+                size_hint: 0.5, 0.05
+                pos_hint: {'x': 0.6, 'top': 0.99}
+                font_size: self.width/15
+
+            Button:
+                text: "+1 elem"
+                size_hint: 0.45, 0.05
+                pos_hint: {'x': 0, 'top': 0.90}
+                on_press: root.increment_elem()
+                font_size: self.width/10
+
+            Button:
+                text: "-1 elem"
+                size_hint: 0.45, 0.05
+                pos_hint: {'x': 0.5, 'top': 0.90}
+                on_press: root.decrement_elem()
+                font_size: self.width/10
+
+
+            ScrollView:
+                do_scroll_x: False
+                do_scroll_y: True
+                id: ScanResults_ScrollViewObj
+                size_hint: 0.95, 0.75
+                pos_hint: {'x': 0, 'top': 0.80}
+                canvas.before:
+                    Color:
+                        rgba: (utils.get_color_from_hex('#266352'))
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+                GridLayout:
+                    width: self.parent.width
+                    id: grid1
+                    size_hint_x: 1
+                    size_hint_y: None
+                    cols: 1
+                    row_default_height: self.parent.height / 3 
+                    row_force_default: True
