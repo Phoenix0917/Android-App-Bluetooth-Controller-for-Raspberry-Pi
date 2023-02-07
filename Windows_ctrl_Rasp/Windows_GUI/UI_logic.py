@@ -67,8 +67,6 @@ class ServiceInfo:
         self.button = button
         self.paired = False
 
-class UserWindow(Screen):
-    pass
 
 # Defines different screens
 class DevWindow(Screen):
@@ -99,11 +97,28 @@ class DevWindow(Screen):
     def kill_pi_power(self):
         print("sending kill command")
         bt_client_sock.send("SY:kill*")
-    
-    def test(self):
-        print('testing')
 
-    
+class UserWindow(Screen):
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
+        if self.manager.current == '': # first entry on program start seems to not update this
+            return
+        elif bt_client_sock == None:
+            self.manager.get_screen("userWindow").ids.status_indicator.text = "Unpaired"
+            self.manager.get_screen("userWindow").ids.KillPi_ButtonObj.disabled = True
+        else:
+            self.manager.get_screen("userWindow").ids.status_indicator.text = "Paired"
+            self.manager.get_screen("userWindow").ids.KillPi_ButtonObj.disabled = False
+
+    def adjust_motor_voltage(*args):
+        print(args)
+
+    def kill_pi_power(self):
+        print("sending kill command")
+        bt_client_sock.send("SY:kill*")
+
 class BluetoothWindow(Screen):
 
     def __init__(self, **kw):

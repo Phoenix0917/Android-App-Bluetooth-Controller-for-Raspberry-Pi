@@ -50,7 +50,7 @@ WindowManager: # root rule (can be any widget)
             on_release:
                 root.stop_claw() 
 
-        ModifiedSlider:
+        Slider:
             id: pwm_multiplier
             min: 0
             max: 100
@@ -289,6 +289,56 @@ WindowManager: # root rule (can be any widget)
                 height: self.parent.height * 0.9
                 keep_ratio: False
 
+        Button:
+            pos_hint: {'x': 0.01, 'top': 0.90}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .125, .125
+            on_press:
+                root.manager.current = "bluetooth"  
+            
+            Image:
+                source: 'Images_Used/BT_Before.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width
+                height: self.parent.height
+                keep_ratio: False
+
+        Label:
+            id: status_indicator
+            text: "Unpaired"
+            font_size: self.width/8
+            size_hint: 0.15, 0.075
+            pos_hint: {'x': 0.01, 'top': 0.99}
+            color: '#b5f7e6'
+            canvas.before:
+                Color:
+                    rgba: utils.get_color_from_hex('#266352')
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+        Button:
+            id: KillPi_ButtonObj
+            pos_hint: {'right': 0.15, 'top': 0.15}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .125, .125
+            disabled: True
+            on_press:
+                self.parent.parent.kill_pi_power()
+            
+            Image:
+                source: 'Images_Used/power.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+
 
 
     
@@ -453,7 +503,7 @@ WindowManager: # root rule (can be any widget)
             Button:
                 text: "Go Back"
                 font_size: self.width/ 20
-                on_release: app.root.current = "control"
+                on_release: app.root.current = "devWindow"
                 background_normal: ''
                 background_color: '#266352'
                 size_hint: 0.8, 0.1

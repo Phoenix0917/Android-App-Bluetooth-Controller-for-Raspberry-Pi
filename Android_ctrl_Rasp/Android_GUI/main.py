@@ -31,8 +31,6 @@ Window.size = (555, 270)
 bt_client_sock = None
 bt_send_stream = None
 
-class UserWindow(Screen):
-    pass
 
 # found class written by someone on git but this is how I think it may work?
 class ModifiedSlider(Slider):
@@ -67,6 +65,28 @@ class CustomButton(Button):
 
 
 # Defines different screens
+
+class UserWindow(Screen):
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
+        if self.manager.current == '': # first entry on program start seems to not update this
+            return
+        elif bt_client_sock == None:
+            self.manager.get_screen("userWindow").ids.status_indicator.text = "Unpaired"
+            self.manager.get_screen("userWindow").ids.KillPi_ButtonObj.disabled = True
+        else:
+            self.manager.get_screen("userWindow").ids.status_indicator.text = "Paired"
+            self.manager.get_screen("userWindow").ids.KillPi_ButtonObj.disabled = False
+
+    def adjust_motor_voltage(*args):
+        print(args)
+
+    def kill_pi_power(self):
+        print("sending kill command")
+        bt_client_sock.send("SY:kill*")
+
 class DevWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
