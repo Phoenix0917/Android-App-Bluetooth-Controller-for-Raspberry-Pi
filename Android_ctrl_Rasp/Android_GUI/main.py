@@ -17,11 +17,11 @@ import ThreadTracing
 import time
 
 # defines classes that can now be declared which are from Java/Android library
-#from jnius import autoclass
-#BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
-#BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
-#BluetoothSocket = autoclass('android.bluetooth.BluetoothSocket')
-#UUID = autoclass('java.util.UUID')
+from jnius import autoclass
+BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
+BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
+BluetoothSocket = autoclass('android.bluetooth.BluetoothSocket')
+UUID = autoclass('java.util.UUID')
 
 
 # can set default window size (for developing when not on final device)
