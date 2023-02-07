@@ -4,11 +4,297 @@
 
 WindowManager: # root rule (can be any widget)
     transition: FadeTransition()
-    ControlWindow: # class inside window manager
+    DevWindow: # class inside window manager
+    UserWindow: # class inside window manager
     BluetoothWindow: # class inside window manager
 
-<ControlWindow>: # class rule
-    name: "control"
+<UserWindow>:
+    name: "userWindow"
+
+    FloatLayout:
+        size: root.width, root.height
+
+        Image:
+            source: 'Images_Used/background.jpg'
+            allow_stretch: True
+            keep_ratio: False
+
+        Button:
+            id: go_to_dev
+            text: "Go to dev screen"
+            pos_hint: {'right': 0.99, 'top': 0.99}
+            font_size: 10
+            size_hint: .15, .15
+            on_press:
+                root.manager.current = "devWindow" 
+
+        Button:
+            id: open_claw
+            text: "Open Claw"
+            pos_hint: {'right': 0.15, 'top': 0.65}
+            font_size: 10
+            size_hint: .125, .125
+            on_press:
+                root.open_claw()
+            on_release:
+                root.stop_claw() 
+
+        Button:
+            id: close_claw
+            text: "Close Claw"
+            pos_hint: {'right': 0.15, 'top': 0.51}
+            font_size: 10
+            size_hint: .125, .125
+            on_press:
+                root.close_claw()
+            on_release:
+                root.stop_claw() 
+
+        ModifiedSlider:
+            id: pwm_multiplier
+            min: 0
+            max: 100
+            step: 1
+            value: ((self.max - self.min) / 2) + self.min
+            orientation: "vertical"
+            pos_hint: {'x': 0.82, 'y': .05}
+            size_hint: .1, .8 
+            cursor_size: self.width / 1.5 , self.width / 1.5
+            on_value: root.adjust_motor_voltage(*args)
+
+        Label:
+            pos_hint: {'center_x': .87, 'center_y': .05}
+            text: "PWM Multiplier"
+            
+
+        Button:
+            id: arrow_up
+            angle: 90
+            pos_hint: {'right': 0.5, 'top': 0.90}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .10, .10
+            disabled: False
+            on_press:
+                root.test()
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: 90
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+            
+            Image:
+                source: 'Images_Used/Arrow.svg.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+    
+        Button:
+            id: arrow_left
+            angle: 180
+            pos_hint: {'right': 0.35, 'top': 0.60}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .10, .10
+            disabled: False
+            on_press:
+                root.test()
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: 180
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+
+            
+            Image:
+                source: 'Images_Used/Arrow.svg.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+
+        Button:
+            id: arrow_down
+            angle: -90
+            pos_hint: {'right': 0.5, 'top': 0.30}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .10, .10
+            disabled: False
+            on_press:
+                root.test()
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: -90
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+
+            
+            Image:
+                source: 'Images_Used/Arrow.svg.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+
+        Button:
+            id: arrow_right
+            angle: 0
+            pos_hint: {'right': 0.65, 'top': 0.60}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .10, .10
+            disabled: False
+            on_press:
+                root.test()
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: 0
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+
+            
+            Image:
+                source: 'Images_Used/Arrow.svg.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+
+        Button:
+            id: arrow_up_right
+            angle: 45
+            pos_hint: {'right': 0.60, 'top': 0.80}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .10, .10
+            disabled: False
+            on_press:
+                root.test()
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: 45
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+            
+            Image:
+                source: 'Images_Used/Arrow.svg.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+    
+        Button:
+            id: arrow_up_left
+            angle: 135
+            pos_hint: {'right': 0.40, 'top': 0.80}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .10, .10
+            disabled: False
+            on_press:
+                root.test()
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: 135
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+
+            
+            Image:
+                source: 'Images_Used/Arrow.svg.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+
+        Button:
+            id: arrow_down_left
+            angle: -135
+            pos_hint: {'right': 0.40, 'top': 0.40}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .10, .10
+            disabled: False
+            on_press:
+                root.test()
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: -135
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+
+            
+            Image:
+                source: 'Images_Used/Arrow.svg.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+
+        Button:
+            id: arrow_down_right
+            angle: -45
+            pos_hint: {'right': 0.60, 'top': 0.40}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .10, .10
+            disabled: False
+            on_press:
+                root.test()
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: -45
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+
+            
+            Image:
+                source: 'Images_Used/Arrow.svg.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width * 0.9
+                height: self.parent.height * 0.9
+                keep_ratio: False
+
+
+
+    
+
+<DevWindow>: # class rule
+    name: "devWindow"
 
     FloatLayout:
         size: root.width, root.height
@@ -37,7 +323,7 @@ WindowManager: # root rule (can be any widget)
 
         Label:
             id: status_indicator
-            text: "Unconnected"
+            text: "Unpaired"
             font_size: self.width/8
             size_hint: 0.15, 0.075
             pos_hint: {'x': 0.01, 'top': 0.99}
@@ -68,6 +354,16 @@ WindowManager: # root rule (can be any widget)
                 height: self.parent.height * 0.9
                 keep_ratio: False
 
+        Button:
+            id: go_to_user
+            text: "Go to user screen"
+            pos_hint: {'right': 0.25, 'top': 0.25}
+            font_size: 10
+            size_hint: .15, .15
+            on_press:
+                root.manager.current = "userWindow" 
+
+
         ModifiedSlider:
             id: left_motor_control
             min: -100
@@ -94,7 +390,6 @@ WindowManager: # root rule (can be any widget)
             size_hint: .1, .8 
             cursor_size: self.width / 1.5 , self.width / 1.5
             on_value: root.slide_it(*args)
-
 
 <BluetoothWindow>: # class rule
     name: "bluetooth"

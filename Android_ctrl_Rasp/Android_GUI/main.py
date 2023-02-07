@@ -17,11 +17,11 @@ import ThreadTracing
 import time
 
 # defines classes that can now be declared which are from Java/Android library
-from jnius import autoclass
-BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
-BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
-BluetoothSocket = autoclass('android.bluetooth.BluetoothSocket')
-UUID = autoclass('java.util.UUID')
+#from jnius import autoclass
+#BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
+#BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
+#BluetoothSocket = autoclass('android.bluetooth.BluetoothSocket')
+#UUID = autoclass('java.util.UUID')
 
 
 # can set default window size (for developing when not on final device)
@@ -31,6 +31,8 @@ Window.size = (555, 270)
 bt_client_sock = None
 bt_send_stream = None
 
+class UserWindow(Screen):
+    pass
 
 # found class written by someone on git but this is how I think it may work?
 class ModifiedSlider(Slider):
@@ -65,7 +67,7 @@ class CustomButton(Button):
 
 
 # Defines different screens
-class ControlWindow(Screen):
+class DevWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
     

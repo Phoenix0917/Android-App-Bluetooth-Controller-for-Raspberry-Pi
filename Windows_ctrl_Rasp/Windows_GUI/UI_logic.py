@@ -1,4 +1,4 @@
-#For nic dev only: before running, in terminal activate venv by doing snrdsn\Scripts\activate
+#For nic dev only: before running, in terminal activate venv by doing kivy_venv\Scripts\activate
 
 from kivy.app import App
 from kivy.uix.widget import Widget
@@ -67,9 +67,11 @@ class ServiceInfo:
         self.button = button
         self.paired = False
 
+class UserWindow(Screen):
+    pass
 
 # Defines different screens
-class ControlWindow(Screen):
+class DevWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
     
@@ -77,11 +79,11 @@ class ControlWindow(Screen):
         if self.manager.current == '': # first entry on program start seems to not update this
             return
         elif bt_client_sock == None:
-            self.manager.get_screen("control").ids.status_indicator.text = "Unpaired"
-            self.manager.get_screen("control").ids.KillPi_ButtonObj.disabled = True
+            self.manager.get_screen("devWindow").ids.status_indicator.text = "Unpaired"
+            self.manager.get_screen("devWindow").ids.KillPi_ButtonObj.disabled = True
         else:
-            self.manager.get_screen("control").ids.status_indicator.text = "Paired"
-            self.manager.get_screen("control").ids.KillPi_ButtonObj.disabled = False
+            self.manager.get_screen("devWindow").ids.status_indicator.text = "Paired"
+            self.manager.get_screen("devWindow").ids.KillPi_ButtonObj.disabled = False
 
     def slide_it(self, *args):
         print(args)
@@ -97,6 +99,9 @@ class ControlWindow(Screen):
     def kill_pi_power(self):
         print("sending kill command")
         bt_client_sock.send("SY:kill*")
+    
+    def test(self):
+        print('testing')
 
     
 class BluetoothWindow(Screen):
