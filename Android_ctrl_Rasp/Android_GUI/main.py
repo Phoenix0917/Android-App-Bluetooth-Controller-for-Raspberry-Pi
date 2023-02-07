@@ -87,6 +87,49 @@ class UserWindow(Screen):
         print("sending kill command")
         bt_client_sock.send("SY:kill*")
 
+    def move_robot(self, direction):
+        print(direction)
+        if direction == 'up':
+            rm = '10'
+            lm = '10'
+        
+        elif direction == 'left':
+            rm = '10'
+            lm = '10'
+        
+        elif direction == 'right':
+            rm = '10'
+            lm = '10'
+        
+        elif direction == 'down':
+            rm = '10'
+            lm = '10'
+        
+        elif direction == 'up_left':
+            rm = '10'
+            lm = '10'
+        
+        elif direction == 'up_right':
+            rm = '10'
+            lm = '10'
+        
+        elif direction == 'down_left':
+            rm = '10'
+            lm = '10'
+
+        elif direction == 'down_right':
+            rm = '10'
+            lm = '10'
+        
+        else:
+            rm = '0'
+            lm = '0'
+
+        global bt_client_sock 
+        if bt_client_sock != None:
+            bt_client_sock.send("LM:" + lm + '*')
+            bt_client_sock.send("RM:" + rm + '*')
+
 class DevWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
