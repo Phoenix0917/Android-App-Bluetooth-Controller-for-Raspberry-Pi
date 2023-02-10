@@ -31,9 +31,9 @@ WindowManager: # root rule (can be any widget)
         Button:
             id: open_claw
             text: "Open Claw"
-            pos_hint: {'right': 0.15, 'top': 0.65}
+            pos_hint: {'right': 0.15, 'top': 0.75}
             font_size: 10
-            size_hint: .125, .125
+            size_hint: .12, .12
             on_press:
                 root.open_claw()
             on_release:
@@ -42,13 +42,33 @@ WindowManager: # root rule (can be any widget)
         Button:
             id: close_claw
             text: "Close Claw"
-            pos_hint: {'right': 0.15, 'top': 0.51}
+            pos_hint: {'right': 0.15, 'top': 0.61}
             font_size: 10
-            size_hint: .125, .125
+            size_hint: .12, .12
             on_press:
                 root.close_claw()
             on_release:
                 root.stop_claw() 
+
+        Button:
+            id: raise_claw
+            text: "Raise Claw"
+            pos_hint: {'right': 0.15, 'top': 0.46}
+            font_size: 10
+            size_hint: .12, .12
+            on_press:
+                root.raise_claw()
+           
+
+        Button:
+            id: lower_claw
+            text: "Lower Claw"
+            pos_hint: {'right': 0.15, 'top': 0.31}
+            font_size: 10
+            size_hint: .12, .12
+            on_press:
+                root.lower_claw()
+            
 
         Slider:
             id: pwm_multiplier

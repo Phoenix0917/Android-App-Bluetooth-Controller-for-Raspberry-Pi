@@ -68,23 +68,32 @@ def data_interpreter(val):
         RMpwm.ChangeDutyCycle(speed)
 
     elif command == 'CL':
-        #This is going to have bug bc need to find way to keep it closing/opening until another signal is received
-        while info != 'stop':
-            while(claw_i>1 and claw_i<15 and claw_j>1 and claw_j<15):
-                arm.ChangeDutyCycle(claw_j)
-                claw.ChangeDutyCycle(claw_i)
-                if(info=='close'): ##if button 1 is pressed close hand
-                    claw_i=claw_i+1
-                    print(claw_i)
-                elif(info == 'open'): ## if button 2 is pressed open hand
-                    claw_i=claw_i-1
-                    print(claw_i)
-                elif(info == 'arm_up'):
-                    claw_j=claw_j+1
-                    print(claw_j)
-                elif(info == 'arm_down'):
-                    claw_j=claw_j-1
-                    print(claw_j)
+        #If we go to far reset to default then do action.
+        #For this, when we press the button to open/close it will open/close one unit so we will have to press button multiple times
+        #This solves bug we would have when holding button bc it would be stuck in a while loop blocked from listening
+        if(claw_i>1 and claw_i<15 and claw_j>1 and claw_j<15):
+            pass
+        elif not (claw_i>1 and claw_i<15):
+            claw_i = 5
+        else:
+            claw_j = 5
+
+        arm.ChangeDutyCycle(claw_j)
+        claw.ChangeDutyCycle(claw_i)
+        if(info=='close'): ##if button 1 is pressed close hand
+            claw_i=claw_i+1
+            print(claw_i)
+        elif(info == 'open'): ## if button 2 is pressed open hand
+            claw_i=claw_i-1
+            print(claw_i)
+        elif(info == 'raise'):
+            claw_j=claw_j+1
+            print(claw_j)
+        elif(info == 'lower'):
+            claw_j=claw_j-1
+            print(claw_j)
+        
+
             
     elif command == 'SY':
         if info == 'hello':

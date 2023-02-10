@@ -115,6 +115,12 @@ class UserWindow(Screen):
     def adjust_motor_voltage(*args):
         print(args)
 
+    def raise_arm(self):
+        bt_client_sock.send("CL:" + 'raise' + '*')
+
+    def lower_arm(self):
+        bt_client_sock.send("CL:" + 'lower' + '*')
+
     def open_claw(self):
         bt_client_sock.send("CL:" + 'open' + '*')
 

@@ -87,6 +87,12 @@ class UserWindow(Screen):
         print("sending kill command")
         bt_client_sock.send("SY:kill*")
 
+    def raise_arm(self):
+        bt_client_sock.send("CL:" + 'raise' + '*')
+
+    def lower_arm(self):
+        bt_client_sock.send("CL:" + 'lower' + '*')
+
     def open_claw(self):
         bt_client_sock.send("CL:" + 'open' + '*')
 
