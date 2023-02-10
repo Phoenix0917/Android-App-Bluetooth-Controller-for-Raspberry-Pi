@@ -1,6 +1,8 @@
 from bluetooth import *
 import RPi.GPIO as GPIO
 import os
+from gpiozero import Servo
+from time import sleep
 
 os.system("sudo hciconfig hci0 piscan")
 os.system("echo changed bluetooth advertise setting")
@@ -9,6 +11,13 @@ LMspeed = 33 # PWM pin
 LMdir = 37
 RMspeed = 32 #PWM pin
 RMdir = 36
+CLAW_PIN = 25
+ARM_PIN = 26
+GPIO.setmode(GPIO.BCM)
+
+
+
+
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
@@ -16,14 +25,20 @@ GPIO.setup(LMspeed, GPIO.OUT)
 GPIO.setup(LMdir, GPIO.OUT)
 GPIO.setup(RMspeed, GPIO.OUT)
 GPIO.setup(RMdir, GPIO.OUT)
+GPIO.setup(CLAW_PIN,GPIO.OUT) ##setup servo for claw
+GPIO.setup(ARM_PIN,GPIO.OUT) ##setup servo for arm
 
+
+arm=GPIO.PWM(ARM_PIN,50)
+claw=GPIO.PWM(CLAW_PIN,50)
 LMpwm = GPIO.PWM(LMspeed, 1000) # set up pwm on this pin with frequency 1000
 RMpwm = GPIO.PWM(RMspeed, 1000) # set up pwm on this pin with frequency 1000
 LMpwm.start(0)
 RMpwm.start(0)
 GPIO.output(LMdir, GPIO.LOW)
 GPIO.output(RMdir, GPIO.LOW)
-
+claw_i=5
+claw_j=5
 
 
 def data_interpreter(val):
@@ -51,7 +66,26 @@ def data_interpreter(val):
             GPIO.output(RMdir, GPIO.HIGH) # going forward
             speed = velocity
         RMpwm.ChangeDutyCycle(speed)
-        
+
+    elif command == 'CL':
+        #This is going to have bug bc need to find way to keep it closing/opening until another signal is received
+        while info != 'stop':
+            while(claw_i>1 and claw_i<15 and claw_j>1 and claw_j<15):
+                arm.ChangeDutyCycle(claw_j)
+                claw.ChangeDutyCycle(claw_i)
+                if(info=='close'): ##if button 1 is pressed close hand
+                    claw_i=claw_i+1
+                    print(claw_i)
+                elif(info == 'open'): ## if button 2 is pressed open hand
+                    claw_i=claw_i-1
+                    print(claw_i)
+                elif(info == 'arm_up'):
+                    claw_j=claw_j+1
+                    print(claw_j)
+                elif(info == 'arm_down'):
+                    claw_j=claw_j-1
+                    print(claw_j)
+            
     elif command == 'SY':
         if info == 'hello':
             print("successful BT connection")

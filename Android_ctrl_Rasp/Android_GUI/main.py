@@ -87,6 +87,15 @@ class UserWindow(Screen):
         print("sending kill command")
         bt_client_sock.send("SY:kill*")
 
+    def open_claw(self):
+        bt_client_sock.send("CL:" + 'open' + '*')
+
+    def close_claw(self):
+        bt_client_sock.send("CL:" + 'close' + '*')
+
+    def stop_claw(self):
+        bt_client_sock.send("CL:" + 'stop' + '*')
+
     def move_robot(self, direction):
         print(direction)
         if direction == 'up':
