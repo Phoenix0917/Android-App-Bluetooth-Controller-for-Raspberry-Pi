@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = BT Robot Controller
+title = BT Robot Controller 2
 
 # (str) Package name
 package.name = BTapp

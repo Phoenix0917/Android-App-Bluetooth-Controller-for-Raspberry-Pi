@@ -25,8 +25,8 @@ UUID = autoclass('java.util.UUID')
 
 
 # can set default window size (for developing when not on final device)
-from kivy.core.window import Window
-Window.size = (555, 270)
+#from kivy.core.window import Window
+#Window.size = (555, 270)
 
 bt_client_sock = None
 bt_send_stream = None
@@ -74,33 +74,44 @@ class UserWindow(Screen):
         if self.manager.current == '': # first entry on program start seems to not update this
             return
         elif bt_client_sock == None:
-            self.manager.get_screen("userWindow").ids.status_indicator.text = "Unpaired"
+            self.manager.get_screen("userWindow").ids.status_indicator.text = "Unconnected"
             self.manager.get_screen("userWindow").ids.KillPi_ButtonObj.disabled = True
         else:
-            self.manager.get_screen("userWindow").ids.status_indicator.text = "Paired"
+            self.manager.get_screen("userWindow").ids.status_indicator.text = "Connected"
             self.manager.get_screen("userWindow").ids.KillPi_ButtonObj.disabled = False
 
     def adjust_motor_voltage(*args):
         print(args)
 
     def kill_pi_power(self):
+        global bt_send_stream
         print("sending kill command")
-        bt_client_sock.send("SY:kill*")
+        bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
 
-    def raise_arm(self):
-        bt_client_sock.send("CL:" + 'raise' + '*')
+    def raise_claw(self):
+        global bt_send_stream 
+        if bt_send_stream != None:
+            bt_send_stream.write(bytes("CL:" + 'raise' + '*', 'utf-8'))
 
-    def lower_arm(self):
-        bt_client_sock.send("CL:" + 'lower' + '*')
+    def lower_claw(self):
+        global bt_send_stream 
+        if bt_send_stream != None:
+            bt_send_stream.write(bytes("CL:" + 'lower' + '*', 'utf-8'))
 
     def open_claw(self):
-        bt_client_sock.send("CL:" + 'open' + '*')
+        global bt_send_stream 
+        if bt_send_stream != None:
+            bt_send_stream.write(bytes("CL:" + 'open' + '*', 'utf-8'))
 
     def close_claw(self):
-        bt_client_sock.send("CL:" + 'close' + '*')
+        global bt_send_stream 
+        if bt_send_stream != None:
+            bt_send_stream.write(bytes("CL:" + 'close' + '*', 'utf-8'))
 
     def stop_claw(self):
-        bt_client_sock.send("CL:" + 'stop' + '*')
+        global bt_send_stream 
+        if bt_send_stream != None:
+            bt_send_stream.write(bytes("CL:" + 'stop' + '*', 'utf-8'))
 
     def move_robot(self, direction):
         print(direction)
@@ -140,12 +151,12 @@ class UserWindow(Screen):
             rm = '0'
             lm = '0'
 
-        global bt_client_sock 
-        if bt_client_sock != None:
-            bt_client_sock.send("LM:" + lm + '*')
-            bt_client_sock.send("RM:" + rm + '*')
+        global bt_send_stream 
+        if bt_send_stream != None:
+            bt_send_stream.write(bytes("LM:" + lm + '*', 'utf-8'))
+            bt_send_stream.write(bytes("RM:" + rm + '*', 'utf-8'))
 
-class DevWindow(Screen):
+class CalibrationWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
     
@@ -153,16 +164,16 @@ class DevWindow(Screen):
         if self.manager.current == '': # first entry on program start seems to not update this
             return
         elif bt_client_sock == None:
-            self.manager.get_screen("control").ids.status_indicator.text = "Unconnected"
-            self.manager.get_screen("control").ids.KillPi_ButtonObj.disabled = True
+            self.manager.get_screen("calibration").ids.status_indicator.text = "Unconnected"
+            self.manager.get_screen("calibration").ids.KillPi_ButtonObj.disabled = True
         else:
-            self.manager.get_screen("control").ids.status_indicator.text = "Connected"
-            self.manager.get_screen("control").ids.KillPi_ButtonObj.disabled = False
+            self.manager.get_screen("calibration").ids.status_indicator.text = "Connected"
+            self.manager.get_screen("calibration").ids.KillPi_ButtonObj.disabled = False
 
     def slide_it(self, *args):
         print(args)
         global bt_send_stream 
-        if bt_client_sock != None:
+        if bt_send_stream != None:
             if args[0] == self.ids.left_motor_control:
                 print("this is left motor")
                 bt_send_stream.write(bytes("LM:" + str(args[1]) + '*', 'utf-8'))

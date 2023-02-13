@@ -11,9 +11,8 @@ LMspeed = 33 # PWM pin
 LMdir = 37
 RMspeed = 32 #PWM pin
 RMdir = 36
-CLAW_PIN = 25
-ARM_PIN = 26
-GPIO.setmode(GPIO.BCM)
+CLAW_PIN = 16
+ARM_PIN = 18
 
 
 
@@ -68,6 +67,8 @@ def data_interpreter(val):
         RMpwm.ChangeDutyCycle(speed)
 
     elif command == 'CL':
+        global claw_i
+        global claw_j
         #If we go to far reset to default then do action.
         #For this, when we press the button to open/close it will open/close one unit so we will have to press button multiple times
         #This solves bug we would have when holding button bc it would be stuck in a while loop blocked from listening
@@ -143,5 +144,4 @@ while True:
     RMpwm.ChangeDutyCycle(0)
     GPIO.output(LMdir, GPIO.LOW)
     GPIO.output(RMdir, GPIO.LOW)
-
 
