@@ -69,6 +69,10 @@ class CustomButton(Button):
 class UserWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
+        self.killable_thread_claw_movement = None
+        self.claw_PWM = 0
+        self.killable_thread_arm_movement = None
+        self.arm_PWM = 0
 
     def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
         if self.manager.current == '': # first entry on program start seems to not update this
@@ -88,30 +92,100 @@ class UserWindow(Screen):
         print("sending kill command")
         bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
 
-    def raise_claw(self):
-        global bt_send_stream 
-        if bt_send_stream != None:
-            bt_send_stream.write(bytes("CL:" + 'raise' + '*', 'utf-8'))
 
-    def lower_claw(self):
-        global bt_send_stream 
-        if bt_send_stream != None:
-            bt_send_stream.write(bytes("CL:" + 'lower' + '*', 'utf-8'))
+    def control_claw(self, instruction):
+        if instruction == 'open':
+            self.ids.CloseClaw_ButtonObj.disabled = True
 
-    def open_claw(self):
-        global bt_send_stream 
-        if bt_send_stream != None:
-            bt_send_stream.write(bytes("CL:" + 'open' + '*', 'utf-8'))
+            def slow_open():
+                global bt_send_stream
+                while self.claw_PWM < 14.8: # prevents value from ever getting above 15
+                    if bt_send_stream != None:
+                        self.claw_PWM = self.claw_PWM + 0.1
+                        bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
+                        time.sleep(1/30) 
+                    else:
+                        self.claw_PWM = self.claw_PWM + 0.1
+                        print(str(self.claw_PWM))
+                        time.sleep(1/30) 
 
-    def close_claw(self):
-        global bt_send_stream 
-        if bt_send_stream != None:
-            bt_send_stream.write(bytes("CL:" + 'close' + '*', 'utf-8'))
+            self.killable_thread_claw_movement = ThreadTracing.thread_with_trace(target = slow_open)
+            self.killable_thread_claw_movement.start()
 
-    def stop_claw(self):
-        global bt_send_stream 
-        if bt_send_stream != None:
-            bt_send_stream.write(bytes("CL:" + 'stop' + '*', 'utf-8'))
+        elif instruction == 'close':
+            self.ids.OpenClaw_ButtonObj.disabled = True
+
+            def slow_close():
+                global bt_send_stream
+                while self.claw_PWM > 0.2: # prevents value from ever dropping below zero
+                    if bt_send_stream != None:
+                        self.claw_PWM = self.claw_PWM - 0.1
+                        bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
+                        time.sleep(1/30) 
+                    else:
+                        self.claw_PWM = self.claw_PWM - 0.1
+                        print(str(self.claw_PWM))
+                        time.sleep(1/30) 
+
+            self.killable_thread_claw_movement = ThreadTracing.thread_with_trace(target = slow_close)
+            self.killable_thread_claw_movement.start()
+
+        elif instruction == 'stop':
+            self.killable_thread_claw_movement.kill()
+            self.killable_thread_claw_movement.join()
+            self.ids.OpenClaw_ButtonObj.disabled = False
+            self.ids.CloseClaw_ButtonObj.disabled = False
+
+        else:
+            print("Invalid instruction passed")
+
+
+    def control_arm(self, instruction):
+        if instruction == 'raise':
+            self.ids.LowerArm_ButtonObj.disabled = True
+
+            def slow_raise():
+                global bt_send_stream
+                while self.arm_PWM < 14.8: # prevents value from ever getting above 15
+                    if bt_send_stream != None:
+                        self.arm_PWM = self.arm_PWM + 0.1
+                        bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
+                        time.sleep(1/30) 
+                    else:
+                        self.arm_PWM = self.arm_PWM + 0.1
+                        print(str(self.arm_PWM))
+                        time.sleep(1/30) 
+
+            self.killable_thread_arm_movement = ThreadTracing.thread_with_trace(target = slow_raise)
+            self.killable_thread_arm_movement.start()
+
+        elif instruction == 'lower':
+            self.ids.RaiseArm_ButtonObj.disabled = True
+
+            def slow_lower():
+                global bt_send_stream
+                while self.arm_PWM > 0.2: # prevents value from ever dropping below zero
+                    if bt_send_stream != None:
+                        self.arm_PWM = self.arm_PWM - 0.1
+                        bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
+                        time.sleep(1/30) 
+                    else:
+                        self.arm_PWM = self.arm_PWM - 0.1
+                        print(str(self.arm_PWM))
+                        time.sleep(1/30) 
+
+            self.killable_thread_arm_movement = ThreadTracing.thread_with_trace(target = slow_lower)
+            self.killable_thread_arm_movement.start()
+
+        elif instruction == 'stop':
+            self.killable_thread_arm_movement.kill()
+            self.killable_thread_arm_movement.join()
+            self.ids.LowerArm_ButtonObj.disabled = False
+            self.ids.RaiseArm_ButtonObj.disabled = False
+
+        else:
+            print("Invalid instruction passed")
+
 
     def move_robot(self, direction):
         print(direction)

@@ -11,10 +11,8 @@ LMspeed = 33 # PWM pin
 LMdir = 37
 RMspeed = 32 #PWM pin
 RMdir = 36
-CLAW_PIN = 16
-ARM_PIN = 18
-
-
+CLwidth = 16
+ARangle = 18
 
 
 
@@ -24,20 +22,20 @@ GPIO.setup(LMspeed, GPIO.OUT)
 GPIO.setup(LMdir, GPIO.OUT)
 GPIO.setup(RMspeed, GPIO.OUT)
 GPIO.setup(RMdir, GPIO.OUT)
-GPIO.setup(CLAW_PIN,GPIO.OUT) ##setup servo for claw
-GPIO.setup(ARM_PIN,GPIO.OUT) ##setup servo for arm
+GPIO.setup(CLwidth,GPIO.OUT) ##setup servo for claw
+GPIO.setup(ARangle,GPIO.OUT) ##setup servo for arm
 
 
-arm=GPIO.PWM(ARM_PIN,50)
-claw=GPIO.PWM(CLAW_PIN,50)
 LMpwm = GPIO.PWM(LMspeed, 1000) # set up pwm on this pin with frequency 1000
 RMpwm = GPIO.PWM(RMspeed, 1000) # set up pwm on this pin with frequency 1000
 LMpwm.start(0)
 RMpwm.start(0)
 GPIO.output(LMdir, GPIO.LOW)
 GPIO.output(RMdir, GPIO.LOW)
-claw_i=5
-claw_j=5
+ARpwm=GPIO.PWM(ARangle, 1000)
+CLpwm=GPIO.PWM(CLwidth, 1000)
+ARpwm.start(0)
+CLpwm.start(0)
 
 
 def data_interpreter(val):
@@ -67,35 +65,13 @@ def data_interpreter(val):
         RMpwm.ChangeDutyCycle(speed)
 
     elif command == 'CL':
-        global claw_i
-        global claw_j
-        #If we go to far reset to default then do action.
-        #For this, when we press the button to open/close it will open/close one unit so we will have to press button multiple times
-        #This solves bug we would have when holding button bc it would be stuck in a while loop blocked from listening
-        if(claw_i>1 and claw_i<15 and claw_j>1 and claw_j<15):
-            pass
-        elif not (claw_i>1 and claw_i<15):
-            claw_i = 5
-        else:
-            claw_j = 5
-
-        arm.ChangeDutyCycle(claw_j)
-        claw.ChangeDutyCycle(claw_i)
-        if(info=='close'): ##if button 1 is pressed close hand
-            claw_i=claw_i+1
-            print(claw_i)
-        elif(info == 'open'): ## if button 2 is pressed open hand
-            claw_i=claw_i-1
-            print(claw_i)
-        elif(info == 'raise'):
-            claw_j=claw_j+1
-            print(claw_j)
-        elif(info == 'lower'):
-            claw_j=claw_j-1
-            print(claw_j)
-        
-
+        width = float(info)
+        CLpwm.ChangeDutyCycle(width)
             
+    elif command == 'AR':
+        angle = float(info)
+        ARpwm.ChangeDutyCycle(angle)
+        
     elif command == 'SY':
         if info == 'hello':
             print("successful BT connection")

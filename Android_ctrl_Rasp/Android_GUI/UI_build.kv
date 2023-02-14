@@ -82,53 +82,61 @@ WindowManager: # root rule (can be any widget)
 
 
         Button:
-            id: open_claw
+            id: OpenClaw_ButtonObj
             text: "Open Claw"
             pos_hint: {'x': 0.01, 'y': 0.2}
             font_size: self.width / 8
             background_normal: ''
             background_color: '#266352'
             size_hint: .125, .125
+            always_release: True
             on_press:
-                root.open_claw()
+                root.control_claw('open')
             on_release:
-                root.stop_claw() 
+                root.control_claw('stop') 
 
         Button:
-            id: close_claw
+            id: CloseClaw_ButtonObj
             text: "Close Claw"
             pos_hint: {'x': 0.01, 'y': 0.05}
             font_size: self.width / 8
             background_normal: ''
             background_color: '#266352'
             size_hint: .125, .125
+            always_release: True
             on_press:
-                root.close_claw()
+                root.control_claw('close')
             on_release:
-                root.stop_claw() 
+                root.control_claw('stop') 
 
         Button:
-            id: raise_claw
+            id: RaiseArm_ButtonObj
             text: "Raise Claw"
             pos_hint: {'x': 0.15, 'y': 0.2}
             font_size: self.width / 8
             background_normal: ''
             background_color: '#266352'
             size_hint: .125, .125
+            always_release: True
             on_press:
-                root.raise_claw()
+                root.control_arm('raise')
+            on_release:
+                root.control_arm('stop')
            
 
         Button:
-            id: lower_claw
+            id: LowerArm_ButtonObj
             text: "Lower Claw"
             pos_hint: {'x': 0.15, 'y': 0.05}
             font_size: self.width / 8
             background_normal: ''
             background_color: '#266352'
             size_hint: .125, .125
+            always_release: True
             on_press:
-                root.lower_claw()
+                root.control_arm('lower')
+            on_release:
+                root.control_arm('stop')
             
 
         Slider:
