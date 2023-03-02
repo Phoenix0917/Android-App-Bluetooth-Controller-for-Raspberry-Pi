@@ -141,7 +141,7 @@ class UserWindow(Screen):
 
             def slow_open():
                 global bt_send_stream
-                while self.claw_PWM < 14.8: # prevents value from ever getting above 15
+                while self.claw_PWM < 11.8: # prevents value from ever getting above 12
                     if bt_send_stream != None:
                         self.claw_PWM = self.claw_PWM + 0.1
                         bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
@@ -188,7 +188,7 @@ class UserWindow(Screen):
 
             def slow_raise():
                 global bt_send_stream
-                while self.arm_PWM < 14.8: # prevents value from ever getting above 15
+                while self.arm_PWM < 9.8: # prevents value from ever getting above 10
                     if bt_send_stream != None:
                         self.arm_PWM = self.arm_PWM + 0.1
                         bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
@@ -206,7 +206,7 @@ class UserWindow(Screen):
 
             def slow_lower():
                 global bt_send_stream
-                while self.arm_PWM > 0.2: # prevents value from ever dropping below zero
+                while self.arm_PWM > 3.2: # prevents value from ever dropping below 3
                     if bt_send_stream != None:
                         self.arm_PWM = self.arm_PWM - 0.1
                         bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
