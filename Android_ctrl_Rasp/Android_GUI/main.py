@@ -10,23 +10,26 @@ from kivy.uix.slider import Slider
 from kivy.graphics import *
 from kivy.core.window import Window
 from kivy.clock import Clock
+from kivy.garden.joystick import Joystick
+
 
 import threading
 from functools import partial
 import ThreadTracing
 import time
 
+'''
 # defines classes that can now be declared which are from Java/Android library
 from jnius import autoclass
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
 BluetoothSocket = autoclass('android.bluetooth.BluetoothSocket')
 UUID = autoclass('java.util.UUID')
-
+'''
 
 # can set default window size (for developing when not on final device)
-#from kivy.core.window import Window
-#Window.size = (555, 270)
+from kivy.core.window import Window
+Window.size = (555, 270)
 
 bt_client_sock = None
 bt_send_stream = None
@@ -75,6 +78,7 @@ class UserWindow(Screen):
         self.arm_PWM = 0
 
     def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
+        self.ids.Control_JoystickObj.bind(pad = self.JoystickHandler)
         if self.manager.current == '': # first entry on program start seems to not update this
             return
         elif bt_client_sock == None:
@@ -83,6 +87,44 @@ class UserWindow(Screen):
         else:
             self.manager.get_screen("userWindow").ids.status_indicator.text = "Connected"
             self.manager.get_screen("userWindow").ids.KillPi_ButtonObj.disabled = False
+
+    def JoystickHandler(self, joystick, pad):
+        x = str(pad[0])[0:5]
+        y = str(pad[1])[0:5]
+        ang = joystick.angle # determine direction from
+        mag = joystick.magnitude
+
+
+        if ang <= 90 or ang >270: # right side of stick
+            LM = 100
+            if ang <= 90 and ang > 0:
+                RM = (200/90)*ang - 100 # simple linear equation relating angle to RM value
+            elif ang < 360 and ang > 270:
+                RM = (-200/90)*ang + 700
+            else: # ang == 0
+                RM = -100
+ 
+        elif ang >90 and ang <= 270: # left side of stick
+            RM = 100
+            if ang < 180 and ang > 90:
+                LM = (-200/90)*ang + 300
+            elif ang <=270 and ang > 180:
+                LM = (200/90)*ang - 500
+            else: # ang == 180
+                LM = -100
+                
+        else:
+            print("Impossible angle")
+        
+        #print(str(ang)[0:5] + ":      " + str(LM)[0:5] + "             " + str(RM)[0:5] )
+
+        LM = LM * mag * self.ids.pwm_multiplier.value
+        RM = RM * mag * self.ids.pwm_multiplier.value
+
+        print(str(ang)[0:5] + ":      " + str(LM)[0:5] + "             " + str(RM)[0:5] )
+
+
+
 
     def adjust_motor_voltage(*args):
         print(args)

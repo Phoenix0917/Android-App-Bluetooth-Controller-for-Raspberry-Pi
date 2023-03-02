@@ -1,6 +1,7 @@
 #: import FadeTransition kivy.uix.screenmanager.FadeTransition
 #: import SlideTransition kivy.uix.screenmanager.SlideTransition
-#:import utils kivy.utils
+#: import utils kivy.utils
+#: import Joystick kivy.garden.joystick.Joystick
 
 WindowManager: # root rule (can be any widget)
     transition: FadeTransition()
@@ -18,23 +19,6 @@ WindowManager: # root rule (can be any widget)
             source: 'Images_Used/background.jpg'
             allow_stretch: True
             keep_ratio: False
-
-        Button:
-            pos_hint: {'x': 0.01, 'top': 0.90}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .125, .125
-            on_press:
-                root.manager.current = "bluetooth"  
-            
-            Image:
-                source: 'Images_Used/BT_Before.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width
-                height: self.parent.height
-                keep_ratio: False
 
         Label:
             id: status_indicator
@@ -70,9 +54,26 @@ WindowManager: # root rule (can be any widget)
                 keep_ratio: False
 
         Button:
+            pos_hint: {'right': 0.84, 'top': 0.99}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .125, .125
+            on_press:
+                root.manager.current = "bluetooth"  
+            
+            Image:
+                source: 'Images_Used/BT_Before.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width
+                height: self.parent.height
+                keep_ratio: False
+
+        Button:
             id: go_to_dev
             text: "Cal screen"
-            pos_hint: {'x': 0.01, 'top': 0.76}
+            pos_hint: {'right': 0.69, 'top': 0.99}
             background_normal: ''
             background_color: '#266352'
             font_size: self.width / 8
@@ -84,7 +85,7 @@ WindowManager: # root rule (can be any widget)
         Button:
             id: OpenClaw_ButtonObj
             text: "Open Claw"
-            pos_hint: {'x': 0.01, 'y': 0.2}
+            pos_hint: {'right': 0.99, 'y': 0.2}
             font_size: self.width / 8
             background_normal: ''
             background_color: '#266352'
@@ -98,7 +99,7 @@ WindowManager: # root rule (can be any widget)
         Button:
             id: CloseClaw_ButtonObj
             text: "Close Claw"
-            pos_hint: {'x': 0.01, 'y': 0.05}
+            pos_hint: {'right': 0.99, 'y': 0.05}
             font_size: self.width / 8
             background_normal: ''
             background_color: '#266352'
@@ -112,7 +113,7 @@ WindowManager: # root rule (can be any widget)
         Button:
             id: RaiseArm_ButtonObj
             text: "Raise Claw"
-            pos_hint: {'x': 0.15, 'y': 0.2}
+            pos_hint: {'right': 0.85, 'y': 0.2}
             font_size: self.width / 8
             background_normal: ''
             background_color: '#266352'
@@ -127,7 +128,7 @@ WindowManager: # root rule (can be any widget)
         Button:
             id: LowerArm_ButtonObj
             text: "Lower Claw"
-            pos_hint: {'x': 0.15, 'y': 0.05}
+            pos_hint: {'right': 0.85, 'y': 0.05}
             font_size: self.width / 8
             background_normal: ''
             background_color: '#266352'
@@ -141,243 +142,96 @@ WindowManager: # root rule (can be any widget)
 
         Slider:
             id: pwm_multiplier
-            min: 0
-            max: 100
-            step: 1
-            value: ((self.max - self.min) / 2) + self.min
+            min: 0.2
+            max: 1
+            step: 0.2
+            value: 0.2
             orientation: "vertical"
-            pos_hint: {'x': 0.82, 'y': .05}
-            size_hint: .1, .8 
-            cursor_size: self.width / 1.5 , self.width / 1.5
+            pos_hint: {'x': 0.3, 'y': .05}
+            size_hint: .1, .55 
+            cursor_size: self.width/2 , self.width/2
             on_value: root.adjust_motor_voltage(*args)
 
-        Label:
-            pos_hint: {'center_x': .87, 'center_y': .05}
-            text: "PWM Multiplier"
-            
+        BoxLayout:
+            size_hint_x: 0.5
+            size_hint_y: 0.5
+            pos_hint: {'x': -.1, 'y': .05}
+            Joystick:
+                id: Control_JoystickObj
+                sticky: False
+                outer_size: 0.7
+                inner_size: 0.7
+                pad_size:   0.5
+                outer_line_width: 0.025
+                inner_line_width: 0.015
+                pad_line_width:   0.025
+                outer_background_color: (0.75, 0.75, 0.75, 1)
+                outer_line_color:       (0.25, 0.25, 0.25, 1)
+                inner_background_color: (0.75, 0.75, 0.75, 1)
+                inner_line_color:       (0.7,  0.7,  0.7,  1)
+                pad_background_color:   (0.4,  0.4,  0.4,  1)
+                pad_line_color:         (0.35, 0.35, 0.35, 1)
 
-        Button:
-            id: arrow_up
-            angle: 90
-            pos_hint: {'right': 0.5, 'top': 0.90}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .10, .10
-            disabled: False
-            on_press:
-                root.move_robot('up')
-            canvas.before:
-                PushMatrix
-                Rotate:
-                    angle: 90
-                    origin: self.center
-            canvas.after:
-                PopMatrix
-            
-            Image:
-                source: 'Images_Used/Arrow.svg.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width * 0.9
-                height: self.parent.height * 0.9
-                keep_ratio: False
-    
-        Button:
-            id: arrow_left
-            angle: 180
-            pos_hint: {'right': 0.35, 'top': 0.60}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .10, .10
-            disabled: False
-            on_press:
-                root.move_robot('left')
-            canvas.before:
-                PushMatrix
-                Rotate:
-                    angle: 180
-                    origin: self.center
-            canvas.after:
-                PopMatrix
 
-            
-            Image:
-                source: 'Images_Used/Arrow.svg.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width * 0.9
-                height: self.parent.height * 0.9
-                keep_ratio: False
+        Switch:
+            active: True   
+            pos_hint: {'x': .05, 'y': .6}
+            size_hint: .1, .1
+            #on_active: root.switch_callback()
 
-        Button:
-            id: arrow_down
-            angle: -90
-            pos_hint: {'right': 0.5, 'top': 0.30}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .10, .10
-            disabled: False
-            on_press:
-                root.move_robot('down')
-            canvas.before:
-                PushMatrix
-                Rotate:
-                    angle: -90
-                    origin: self.center
-            canvas.after:
-                PopMatrix
+            canvas:
+                Color:
+                    rgb: 1, 0, 0, 1
+                Rectangle:
+                    size: sp(41.5), sp(20)
+                    pos: self.center_x - sp(40.0), self.center_y - sp(10)
+                Color:
+                    rgb: 0, 0, 1, 1
+                Rectangle:
+                    size: sp(41.0), sp(20)
+                    pos: self.center_x, self.center_y - sp(10)
+            Label:
+                color: 1, 1, 1, 1
+                text: 'DRV'
+                bold: True
+                font_size: self.width/8
+                pos: self.parent.center_x - sp(70), self.parent.center_y - sp(50)                
+            Label:
+                color: 0, 1, 0, 1
+                text: 'REV'
+                bold: True
+                font_size: self.width/8
+                pos: self.parent.center_x - sp(30), self.parent.center_y - sp(50)
 
-            
-            Image:
-                source: 'Images_Used/Arrow.svg.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width * 0.9
-                height: self.parent.height * 0.9
-                keep_ratio: False
+        Switch:
+            active: True   
+            pos_hint: {'x': .25, 'y': .6}
+            size_hint: .1, .1
+            #on_active: root.switch_callback()
 
-        Button:
-            id: arrow_right
-            angle: 0
-            pos_hint: {'right': 0.65, 'top': 0.60}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .10, .10
-            disabled: False
-            on_press:
-                root.move_robot('right')
-            canvas.before:
-                PushMatrix
-                Rotate:
-                    angle: 0
-                    origin: self.center
-            canvas.after:
-                PopMatrix
-
-            
-            Image:
-                source: 'Images_Used/Arrow.svg.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width * 0.9
-                height: self.parent.height * 0.9
-                keep_ratio: False
-
-        Button:
-            id: arrow_up_right
-            angle: 45
-            pos_hint: {'right': 0.60, 'top': 0.80}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .10, .10
-            disabled: False
-            on_press:
-                root.move_robot('up_right')
-            canvas.before:
-                PushMatrix
-                Rotate:
-                    angle: 45
-                    origin: self.center
-            canvas.after:
-                PopMatrix
-            
-            Image:
-                source: 'Images_Used/Arrow.svg.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width * 0.9
-                height: self.parent.height * 0.9
-                keep_ratio: False
-    
-        Button:
-            id: arrow_up_left
-            angle: 135
-            pos_hint: {'right': 0.40, 'top': 0.80}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .10, .10
-            disabled: False
-            on_press:
-                root.move_robot('up_left')
-            canvas.before:
-                PushMatrix
-                Rotate:
-                    angle: 135
-                    origin: self.center
-            canvas.after:
-                PopMatrix
-
-            
-            Image:
-                source: 'Images_Used/Arrow.svg.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width * 0.9
-                height: self.parent.height * 0.9
-                keep_ratio: False
-
-        Button:
-            id: arrow_down_left
-            angle: -135
-            pos_hint: {'right': 0.40, 'top': 0.40}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .10, .10
-            disabled: False
-            on_press:
-                root.move_robot('down_left')
-            canvas.before:
-                PushMatrix
-                Rotate:
-                    angle: -135
-                    origin: self.center
-            canvas.after:
-                PopMatrix
-
-            
-            Image:
-                source: 'Images_Used/Arrow.svg.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width * 0.9
-                height: self.parent.height * 0.9
-                keep_ratio: False
-
-        Button:
-            id: arrow_down_right
-            angle: -45
-            pos_hint: {'right': 0.60, 'top': 0.40}
-            background_normal: ''
-            background_color: '#266352'
-            font_size: 10
-            size_hint: .10, .10
-            disabled: False
-            on_press:
-                root.move_robot('down_right')
-            canvas.before:
-                PushMatrix
-                Rotate:
-                    angle: -45
-                    origin: self.center
-            canvas.after:
-                PopMatrix
-
-            
-            Image:
-                source: 'Images_Used/Arrow.svg.png'
-                center_x: self.parent.center_x
-                center_y: self.parent.center_y
-                width: self.parent.width * 0.9
-                height: self.parent.height * 0.9
-                keep_ratio: False
-
+            canvas:
+                Color:
+                    rgb: 1, 0, 0, 1
+                Rectangle:
+                    size: sp(41.5), sp(20)
+                    pos: self.center_x - sp(40.0), self.center_y - sp(10)
+                Color:
+                    rgb: 0, 0, 1, 1
+                Rectangle:
+                    size: sp(41.0), sp(20)
+                    pos: self.center_x, self.center_y - sp(10)
+            Label:
+                color: 1, 1, 1, 1
+                text: 'JS'
+                bold: True
+                font_size: self.width/8
+                pos: self.parent.center_x - sp(70), self.parent.center_y - sp(50)                
+            Label:
+                color: 0, 1, 0, 1
+                text: 'TILT'
+                bold: True
+                font_size: self.width/8
+                pos: self.parent.center_x - sp(30), self.parent.center_y - sp(50)
 
 
     
