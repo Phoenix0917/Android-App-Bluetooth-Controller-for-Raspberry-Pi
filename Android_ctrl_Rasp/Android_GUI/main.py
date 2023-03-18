@@ -95,39 +95,75 @@ class UserWindow(Screen):
         mag = joystick.magnitude
 
 
-        if ang <= 90 or ang >270: # right side of stick
-            LM = 100
-            if ang <= 90 and ang > 0:
-                RM = (200/90)*ang - 100 # simple linear equation relating angle to RM value
-            elif ang < 360 and ang > 270:
-                RM = (-200/90)*ang + 700
-            else: # ang == 0
-                RM = -100
- 
-        elif ang >90 and ang <= 270: # left side of stick
-            RM = 100
-            if ang < 180 and ang > 90:
-                LM = (-200/90)*ang + 300
-            elif ang <=270 and ang > 180:
-                LM = (200/90)*ang - 500
-            else: # ang == 180
-                LM = -100
-                
-        else:
-            print("Impossible angle")
+        # stick is doing drive mode
+        if self.ids.Drive_ToggleButtonObj.state == 'down':
+            if ang <= 90 or ang >270: # right side of stick
+                LM = 100
+                if ang <= 90 and ang > 0:
+                    RM = (200/90)*ang - 100 # simple linear equation relating angle to RM value
+                elif ang < 360 and ang > 270:
+                    RM = (-200/90)*ang + 700
+                else: # ang == 0
+                    RM = -100
+    
+            elif ang >90 and ang <= 270: # left side of stick
+                RM = 100
+                if ang < 180 and ang > 90:
+                    LM = (-200/90)*ang + 300
+                elif ang <=270 and ang > 180:
+                    LM = (200/90)*ang - 500
+                else: # ang == 180
+                    LM = -100
+                    
+            else:
+                print("Impossible angle")
+
+            LM = LM * mag * self.ids.PwmMultiplier_SliderObj.value
+            RM = RM * mag * self.ids.PwmMultiplier_SliderObj.value
         
-        #print(str(ang)[0:5] + ":      " + str(LM)[0:5] + "             " + str(RM)[0:5] )
+        # stick is doing reverse mode
+        else:
+            if ang <= 90 or ang >270: # right side of stick
+                LM = -100
+                if ang <= 90 and ang > 0:
+                    RM = (-200/90)*ang + 100 # simple linear equation relating angle to RM value
+                elif ang < 360 and ang > 270:
+                    RM = (200/90)*ang - 700
+                else: # ang == 0
+                    RM = 100
+    
+            elif ang >90 and ang <= 270: # left side of stick
+                RM = -100
+                if ang < 180 and ang > 90:
+                    LM = (200/90)*ang - 300
+                elif ang <=270 and ang > 180:
+                    LM = (-200/90)*ang + 500
+                else: # ang == 180
+                    LM = 100
+                    
+            else:
+                print("Impossible angle")
 
-        LM = LM * mag * self.ids.pwm_multiplier.value
-        RM = RM * mag * self.ids.pwm_multiplier.value
 
-        print(str(ang)[0:5] + ":      " + str(LM)[0:5] + "             " + str(RM)[0:5] )
+            LM = LM * mag * self.ids.PwmMultiplier_SliderObj.value
+            RM = RM * mag * self.ids.PwmMultiplier_SliderObj.value
 
-
-
-
-    def adjust_motor_voltage(*args):
-        print(args)
+        # !!! may cause issues, needs testing !!!
+        try: # connected and writing
+            bt_send_stream.write(bytes("LM:" + str(LM) + '*' + 'RM:' + str(RM) + '*', 'utf-8'))
+            #bt_send_stream.write(bytes("RM:" + str(RM) + '*', 'utf-8'))
+        except: # lost connection
+            print(str(ang)[0:5] + ":      " + str(LM)[0:5] + "             " + str(RM)[0:5] )
+            self.ids.status_indicator.text = "Unconnected"
+            self.ids.KillPi_ButtonObj.disabled = True
+            try:
+                bt_client_sock.close()
+                bt_send_stream.close()
+            except:
+                pass
+            bt_client_sock = None
+            bt_send_stream = None
+            # ideally would change current buttons color in connection screen
 
     def kill_pi_power(self):
         global bt_send_stream
@@ -227,50 +263,6 @@ class UserWindow(Screen):
 
         else:
             print("Invalid instruction passed")
-
-
-    def move_robot(self, direction):
-        print(direction)
-        if direction == 'up':
-            rm = '10'
-            lm = '10'
-        
-        elif direction == 'left':
-            rm = '10'
-            lm = '10'
-        
-        elif direction == 'right':
-            rm = '10'
-            lm = '10'
-        
-        elif direction == 'down':
-            rm = '10'
-            lm = '10'
-        
-        elif direction == 'up_left':
-            rm = '10'
-            lm = '10'
-        
-        elif direction == 'up_right':
-            rm = '10'
-            lm = '10'
-        
-        elif direction == 'down_left':
-            rm = '10'
-            lm = '10'
-
-        elif direction == 'down_right':
-            rm = '10'
-            lm = '10'
-        
-        else:
-            rm = '0'
-            lm = '0'
-
-        global bt_send_stream 
-        if bt_send_stream != None:
-            bt_send_stream.write(bytes("LM:" + lm + '*', 'utf-8'))
-            bt_send_stream.write(bytes("RM:" + rm + '*', 'utf-8'))
 
 class CalibrationWindow(Screen):
     def __init__(self, **kw):
