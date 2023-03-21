@@ -14,6 +14,7 @@ RMspeed = 32 #PWM pin
 RMdir = 36
 CLwidth = 23
 ARangle = 24
+os.system("sudo pigpiod")
 
 pwm=pigpio.pi()
 
@@ -125,3 +126,4 @@ while True:
     pwm.set_PWM_frequency(CLwidth,0)
     pwm.set_PWM_dutycycle(ARangle,0)
     pwm.set_PWM_frequency(ARangle,0)
+    os.system("sudo killall pigpiod")
