@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import os
 from gpiozero import Servo
 from time import sleep
+import pigpio
 
 os.system("sudo hciconfig hci0 piscan")
 os.system("echo changed bluetooth advertise setting")
@@ -11,9 +12,10 @@ LMspeed = 33 # PWM pin
 LMdir = 37
 RMspeed = 32 #PWM pin
 RMdir = 36
-CLwidth = 16
-ARangle = 18
+CLwidth = 23
+ARangle = 24
 
+pwm=pigpio.pi()
 
 
 GPIO.setwarnings(False)
@@ -22,9 +24,11 @@ GPIO.setup(LMspeed, GPIO.OUT)
 GPIO.setup(LMdir, GPIO.OUT)
 GPIO.setup(RMspeed, GPIO.OUT)
 GPIO.setup(RMdir, GPIO.OUT)
-GPIO.setup(CLwidth,GPIO.OUT) ##setup servo for claw
-GPIO.setup(ARangle,GPIO.OUT) ##setup servo for arm
 
+pwm.set_mode(CLwidth,pigpio.OUTPUT) ##setup servo for claw
+pwm.set_PWM_frequency(CLwidth,50)
+pwm.set_mode(ARangle,pigpio.OUTPUT) ##setup servo for arm
+pwm.set_PWM_frequency(ARangle,50)
 
 LMpwm = GPIO.PWM(LMspeed, 1000) # set up pwm on this pin with frequency 1000
 RMpwm = GPIO.PWM(RMspeed, 1000) # set up pwm on this pin with frequency 1000
@@ -32,10 +36,7 @@ LMpwm.start(0)
 RMpwm.start(0)
 GPIO.output(LMdir, GPIO.LOW)
 GPIO.output(RMdir, GPIO.LOW)
-ARpwm=GPIO.PWM(ARangle, 50)
-CLpwm=GPIO.PWM(CLwidth, 50)
-ARpwm.start(0)
-CLpwm.start(0)
+
 
 
 def data_interpreter(val):
@@ -66,11 +67,11 @@ def data_interpreter(val):
 
     elif command == 'CL':
         width = float(info)
-        CLpwm.ChangeDutyCycle(width)
+        pwm.set_servo_pulsewidth(CLwidth,width)
             
     elif command == 'AR':
         angle = float(info)
-        ARpwm.ChangeDutyCycle(angle)
+        pwm.set_servo_pulsewidth(ARangle,angle)
         
     elif command == 'SY':
         if info == 'hello':
@@ -120,4 +121,7 @@ while True:
     RMpwm.ChangeDutyCycle(0)
     GPIO.output(LMdir, GPIO.LOW)
     GPIO.output(RMdir, GPIO.LOW)
-
+    pwm.set_PWM_dutycycle(CLwidth,0)
+    pwm.set_PWM_frequency(CLwidth,0)
+    pwm.set_PWM_dutycycle(ARangle,0)
+    pwm.set_PWM_frequency(ARangle,0)
