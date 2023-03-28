@@ -301,6 +301,7 @@ class UserWindow(Screen):
         self.killable_thread_claw_movement = None
         self.claw_PWM = 2500
         self.killable_thread_arm_movement = None
+<<<<<<< HEAD
         self.arm_PWM = 1500
 
         self.killable_thread_gyro_movement = None
@@ -309,6 +310,9 @@ class UserWindow(Screen):
         self.values = [None, None, None]
         self.myGyro = AndroidGyroscope()
         self.mySense = AndroidSpOrientation()
+=======
+        self.arm_PWM = 750
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
 
     def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
         self.ids.Control_JoystickObj.bind(pad = self.JoystickHandler)
@@ -519,13 +523,23 @@ class UserWindow(Screen):
 
             def slow_open():
                 global bt_send_stream
+<<<<<<< HEAD
                 while self.claw_PWM > 500: # prevents value from ever getting above 12
                     if bt_send_stream != None:
                         self.claw_PWM = self.claw_PWM - 50
+=======
+                while self.claw_PWM < 2500: # prevents value from ever getting above 2500
+                    if bt_send_stream != None:
+                        self.claw_PWM = self.claw_PWM + 50
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
                         time.sleep(0.1) 
                     else:
+<<<<<<< HEAD
                         self.claw_PWM = self.claw_PWM - 50
+=======
+                        self.claw_PWM = self.claw_PWM + 50
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         print(str(self.claw_PWM))
                         time.sleep(0.1) 
 
@@ -537,13 +551,23 @@ class UserWindow(Screen):
 
             def slow_close():
                 global bt_send_stream
+<<<<<<< HEAD
                 while self.claw_PWM < 2500: # prevents value from ever dropping below zero
                     if bt_send_stream != None:
                         self.claw_PWM = self.claw_PWM + 50
+=======
+                while self.claw_PWM > 500: # prevents value from ever dropping below 500
+                    if bt_send_stream != None:
+                        self.claw_PWM = self.claw_PWM - 50
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
                         time.sleep(0.1) 
                     else:
+<<<<<<< HEAD
                         self.claw_PWM = self.claw_PWM + 50
+=======
+                        self.claw_PWM = self.claw_PWM - 50
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         print(str(self.claw_PWM))
                         time.sleep(0.1) 
 
@@ -566,13 +590,23 @@ class UserWindow(Screen):
 
             def slow_raise():
                 global bt_send_stream
+<<<<<<< HEAD
                 while self.arm_PWM > 750 : # prevents value from ever getting above 10
                     if bt_send_stream != None:
                         self.arm_PWM = self.arm_PWM - 25
+=======
+                while self.arm_PWM < 2000: # prevents value from ever getting above 2000
+                    if bt_send_stream != None:
+                        self.arm_PWM = self.arm_PWM + 25
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
                         time.sleep(0.1) 
                     else:
+<<<<<<< HEAD
                         self.arm_PWM = self.arm_PWM - 25
+=======
+                        self.arm_PWM = self.arm_PWM + 25
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         print(str(self.arm_PWM))
                         time.sleep(0.1) 
 
@@ -584,13 +618,23 @@ class UserWindow(Screen):
 
             def slow_lower():
                 global bt_send_stream
+<<<<<<< HEAD
                 while self.arm_PWM < 2000: # prevents value from ever dropping below 3
                     if bt_send_stream != None:
                         self.arm_PWM = self.arm_PWM + 25
+=======
+                while self.arm_PWM > 750: # prevents value from ever dropping below 750
+                    if bt_send_stream != None:
+                        self.arm_PWM = self.arm_PWM - 25
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
                         time.sleep(0.1) 
                     else:
+<<<<<<< HEAD
                         self.arm_PWM = self.arm_PWM + 25
+=======
+                        self.arm_PWM = self.arm_PWM - 25
+>>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         print(str(self.arm_PWM))
                         time.sleep(0.1) 
 
