@@ -18,14 +18,240 @@ from functools import partial
 import ThreadTracing
 import time
 
-'''
+
 # defines classes that can now be declared which are from Java/Android library
 from jnius import autoclass
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
 BluetoothSocket = autoclass('android.bluetooth.BluetoothSocket')
 UUID = autoclass('java.util.UUID')
-'''
+
+
+from plyer.facades import Gyroscope
+from jnius import PythonJavaClass, java_method, cast
+from plyer.platforms.android import activity
+Context = autoclass('android.content.Context')
+Sensor = autoclass('android.hardware.Sensor')
+SensorManager = autoclass('android.hardware.SensorManager')
+
+class GyroscopeSensorListener(PythonJavaClass):
+    __javainterfaces__ = ['android/hardware/SensorEventListener']
+
+    def __init__(self):
+        super().__init__()
+        self.SensorManager = cast(
+            'android.hardware.SensorManager',
+            activity.getSystemService(Context.SENSOR_SERVICE)
+        )
+        self.sensor = self.SensorManager.getDefaultSensor(
+            Sensor.TYPE_GYROSCOPE
+        )
+
+        self.values = [None, None, None]
+
+    def enable(self):
+        self.SensorManager.registerListener(
+            self, self.sensor,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+
+    def disable(self):
+        self.SensorManager.unregisterListener(self, self.sensor)
+
+    @java_method('(Landroid/hardware/SensorEvent;)V')
+    def onSensorChanged(self, event):
+        self.values = event.values[:3]
+
+    @java_method('(Landroid/hardware/Sensor;I)V')
+    def onAccuracyChanged(self, sensor, accuracy):
+        # Maybe, do something in future?
+        pass
+
+
+class GyroUncalibratedSensorListener(PythonJavaClass):
+    __javainterfaces__ = ['android/hardware/SensorEventListener']
+
+    def __init__(self):
+        super().__init__()
+        service = activity.getSystemService(Context.SENSOR_SERVICE)
+        self.SensorManager = cast('android.hardware.SensorManager', service)
+
+        self.sensor = self.SensorManager.getDefaultSensor(
+            Sensor.TYPE_GYROSCOPE_UNCALIBRATED)
+        self.values = [None, None, None, None, None, None]
+
+    def enable(self):
+        self.SensorManager.registerListener(
+            self, self.sensor,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+
+    def disable(self):
+        self.SensorManager.unregisterListener(self, self.sensor)
+
+    @java_method('(Landroid/hardware/SensorEvent;)V')
+    def onSensorChanged(self, event):
+        self.values = event.values[:6]
+
+    @java_method('(Landroid/hardware/Sensor;I)V')
+    def onAccuracyChanged(self, sensor, accuracy):
+        pass
+
+
+class AndroidGyroscope(Gyroscope):
+    def __init__(self):
+        super().__init__()
+        self.bState = False
+
+    def _enable(self):
+        if (not self.bState):
+            self.listenerg = GyroscopeSensorListener()
+            self.listenergu = GyroUncalibratedSensorListener()
+            self.listenerg.enable()
+            self.listenergu.enable()
+            self.bState = True
+
+    def _disable(self):
+        if (self.bState):
+            self.bState = False
+            self.listenerg.disable()
+            self.listenergu.disable()
+            del self.listenerg
+            del self.listenergu
+
+    def _get_orientation(self):
+        if (self.bState):
+            return tuple(self.listenerg.values)
+        else:
+            return (None, None, None)
+
+    def _get_rotation_uncalib(self):
+        if (self.bState):
+            return tuple(self.listenergu.values)
+        else:
+            return (None, None, None, None, None, None)
+
+    def __del__(self):
+        if self.bState:
+            self._disable()
+        super().__del__()
+
+
+from jnius import autoclass
+from jnius import cast
+from jnius import java_method
+from jnius import PythonJavaClass
+from plyer.platforms.android import activity
+from plyer.facades import SpatialOrientation
+
+Context = autoclass('android.content.Context')
+Sensor = autoclass('android.hardware.Sensor')
+SensorManager = autoclass('android.hardware.SensorManager')
+
+
+class AccelerometerSensorListener(PythonJavaClass):
+    __javainterfaces__ = ['android/hardware/SensorEventListener']
+
+    def __init__(self):
+        super().__init__()
+        self.SensorManager = cast(
+            'android.hardware.SensorManager',
+            activity.getSystemService(Context.SENSOR_SERVICE)
+        )
+        self.sensor = self.SensorManager.getDefaultSensor(
+            Sensor.TYPE_ACCELEROMETER
+        )
+        self.values = [None, None, None]
+
+    def enable(self):
+        self.SensorManager.registerListener(
+            self, self.sensor,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+
+    def disable(self):
+        self.SensorManager.unregisterListener(self, self.sensor)
+
+    @java_method('(Landroid/hardware/SensorEvent;)V')
+    def onSensorChanged(self, event):
+        self.values = event.values[:3]
+
+    @java_method('(Landroid/hardware/Sensor;I)V')
+    def onAccuracyChanged(self, sensor, accuracy):
+        pass
+
+
+class MagnetometerSensorListener(PythonJavaClass):
+    __javainterfaces__ = ['android/hardware/SensorEventListener']
+
+    def __init__(self):
+        super().__init__()
+        service = activity.getSystemService(Context.SENSOR_SERVICE)
+        self.SensorManager = cast('android.hardware.SensorManager', service)
+
+        self.sensor = self.SensorManager.getDefaultSensor(
+            Sensor.TYPE_MAGNETIC_FIELD)
+        self.values = [None, None, None]
+
+    def enable(self):
+        self.SensorManager.registerListener(
+            self, self.sensor,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+
+    def disable(self):
+        self.SensorManager.unregisterListener(self, self.sensor)
+
+    @java_method('(Landroid/hardware/SensorEvent;)V')
+    def onSensorChanged(self, event):
+        self.values = event.values[:3]
+
+    @java_method('(Landroid/hardware/Sensor;I)V')
+    def onAccuracyChanged(self, sensor, accuracy):
+        pass
+
+
+class AndroidSpOrientation(SpatialOrientation):
+
+    def __init__(self):
+        self.state = False
+
+    def _get_orientation(self):
+        if self.state:
+            rotation = [0] * 9
+            inclination = [0] * 9
+            gravity = []
+            geomagnetic = []
+            gravity = self.listener_a.values
+            geomagnetic = self.listener_m.values
+            if gravity[0] is not None and geomagnetic[0] is not None:
+                ff_state = SensorManager.getRotationMatrix(
+                    rotation, inclination,
+                    gravity, geomagnetic
+                )
+                if ff_state:
+                    values = [0, 0, 0]
+                    values = SensorManager.getOrientation(
+                        rotation, values
+                    )
+                return values
+
+    def _enable_listener(self, **kwargs):
+        if not self.state:
+            self.listener_a = AccelerometerSensorListener()
+            self.listener_m = MagnetometerSensorListener()
+            self.listener_a.enable()
+            self.listener_m.enable()
+            self.state = True
+
+    def _disable_listener(self, **kwargs):
+        if self.state:
+            self.listener_a.disable()
+            self.listener_m.disable()
+            self.state = False
+            delattr(self, 'listener_a')
+            delattr(self, 'listener_m')
+
 
 # can set default window size (for developing when not on final device)
 from kivy.core.window import Window
@@ -63,7 +289,7 @@ class CustomButton(Button):
         self.text = "    Name:  " + device_with_service.getName() + '\n    Host:  ' + device_with_service.getAddress() + '\n    Service:  ' + service_uuid.toString()
         self.size_hint_x = 1
         self.halign = "left"
-        self.valign = "top"
+        self.valign = "middle"
 
 
 
@@ -73,9 +299,16 @@ class UserWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
         self.killable_thread_claw_movement = None
-        self.claw_PWM = 0
+        self.claw_PWM = 2500
         self.killable_thread_arm_movement = None
-        self.arm_PWM = 0
+        self.arm_PWM = 1500
+
+        self.killable_thread_gyro_movement = None
+        self.sensor_manager = cast('android.hardware.SensorManager', activity.getSystemService(Context.SENSOR_SERVICE))
+        self.rotation_sensor = self.sensor_manager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+        self.values = [None, None, None]
+        self.myGyro = AndroidGyroscope()
+        self.mySense = AndroidSpOrientation()
 
     def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
         self.ids.Control_JoystickObj.bind(pad = self.JoystickHandler)
@@ -148,6 +381,7 @@ class UserWindow(Screen):
             LM = LM * mag * self.ids.PwmMultiplier_SliderObj.value
             RM = RM * mag * self.ids.PwmMultiplier_SliderObj.value
 
+        '''
         # !!! may cause issues, needs testing !!!
         try: # connected and writing
             bt_send_stream.write(bytes("LM:" + str(LM) + '*' + 'RM:' + str(RM) + '*', 'utf-8'))
@@ -164,6 +398,114 @@ class UserWindow(Screen):
             bt_client_sock = None
             bt_send_stream = None
             # ideally would change current buttons color in connection screen
+        '''
+
+        if bt_send_stream != None:
+            bt_send_stream.write(bytes("LM:" + str(LM) + '*' + 'RM:' + str(RM) + '*', 'utf-8'))
+        else:
+            print(str(ang)[0:5] + ":      " + str(LM)[0:5] + "             " + str(RM)[0:5] )
+
+    def tilt_handler(self, enable):
+        self.state = 'down'
+        if enable == 1:
+            #self.sensor_manager.registerListener(self, self.rotation_sensor, SensorManager.SENSOR_DELAY_NORMAL)
+            #self.myGyro._enable()
+            self.mySense._enable_listener()
+            #myGyroData = self.myGyro._get_orientation()
+            #print(str(myGyroData))
+            self.killable_thread_gyro_movement = ThreadTracing.thread_with_trace(target = self.print_gyro_info)
+            self.killable_thread_gyro_movement.start()
+
+        else: #enable = 0
+            #self.sensor_manager.unregisterListener(self, self.rotation_sensor)
+            self.killable_thread_gyro_movement.kill()
+            #self.myGyro._disable()
+            self.mySense._disable_listener()
+
+
+    def print_gyro_info(self):
+        while True:
+            #myGyroData = self.myGyro._get_orientation()
+            #print(str(myGyroData))
+            myOrData = self.mySense._get_orientation()
+            print(type(myOrData))
+            print(str(myOrData) + "    + " + str(myOrData[0] + myOrData[2]) + "    - " + str(myOrData[0] - myOrData[2]) + "    - " + str(myOrData[2] - myOrData[0]))
+
+            time.sleep(1)
+
+    #@java_method('(Landroid/hardware/SensorEvent;)V')
+    #def 
+    
+    '''
+    def spatial_orientation_interpreter(self):
+        RM = LM = 0
+        pi = 3.14
+        while True:
+            orientation_data = self.mySense._get_orientation() # returns in radians
+            try: # on start up can return (None, None, None)
+                orientation_data[0] = orientation_data[0] * 180 / pi
+                orientation_data[1] = orientation_data[1] * 180 / pi
+                orientation_data[2] = orientation_data[2] * 180 / pi
+
+                if orientation_data[1] >=0:
+                    print("Full Forward")
+                    RM = LM = 100
+                elif orientation_data[1] < 0 and orientation_data[2] >= -60:
+                    print("Partial Forward")
+                    
+                    # 0 --> LM = 100, RM = 100
+                    # -60 --> LM= 0, RM = 0
+                    # y = 5/3x + 100
+                    RM = LM = ((5/3) * orientation_data[2]) + 100
+
+                elif orientation_data[1] < -60:
+                    print("Full Stop")
+                    RM = LM = 0
+
+                # only attempt turn interpretation if phone is at greater than -70 degree angle
+                if orientation_data[1] > -70:
+                    if orientation_data[2] >= 70:
+                        RM = RM * -1
+                        print("Full Right")
+
+                    elif orientation_data[2] > 10 and orientation_data[2] < 70:
+                        print("Partial Right")
+                        # 70 --> LM = 100, RM = -100
+                        # 10 --> LM= 100, RM = 100
+                        # y = -10/3x + 133.3333
+                        RM = (-(10/3)) * orientation_data[2] + 133 + (1/3)
+
+                    elif orientation_data[2] >= -10 and orientation_data[2] <= 10:
+                        print("No Turn")
+                        # don't touch RM or LM
+
+                    elif orientation_data[2] > -70 and orientation_data[2] < -10:
+                        print("Partial Left")
+                        # -70 --> LM = -100, RM = 100
+                        # -10 --> LM = 100, RM = 100
+                        # y = -10/3x + 133.3333
+                        LM = (10/3) * orientation_data[2] + 133 + (1/3)
+
+                    elif orientation_data[2] <= -70:
+                        print("Full Left")
+                        LM = LM * -1
+                        
+                print(str(orientation_data))
+            except:
+                pass
+
+            LM = LM * self.ids.PwmMultiplier_SliderObj.value
+            RM = RM * self.ids.PwmMultiplier_SliderObj.value
+
+            if bt_send_stream != None:
+                bt_send_stream.write(bytes("LM:" + str(LM) + '*' + 'RM:' + str(RM) + '*', 'utf-8'))
+            else:
+                print(str(LM)[0:5] + "             " + str(RM)[0:5] )
+
+
+            time.sleep(1)
+    '''
+
 
     def kill_pi_power(self):
         global bt_send_stream
@@ -177,15 +519,15 @@ class UserWindow(Screen):
 
             def slow_open():
                 global bt_send_stream
-                while self.claw_PWM < 11.8: # prevents value from ever getting above 12
+                while self.claw_PWM > 500: # prevents value from ever getting above 12
                     if bt_send_stream != None:
-                        self.claw_PWM = self.claw_PWM + 0.1
+                        self.claw_PWM = self.claw_PWM - 50
                         bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
-                        time.sleep(1/30) 
+                        time.sleep(0.1) 
                     else:
-                        self.claw_PWM = self.claw_PWM + 0.1
+                        self.claw_PWM = self.claw_PWM - 50
                         print(str(self.claw_PWM))
-                        time.sleep(1/30) 
+                        time.sleep(0.1) 
 
             self.killable_thread_claw_movement = ThreadTracing.thread_with_trace(target = slow_open)
             self.killable_thread_claw_movement.start()
@@ -195,15 +537,15 @@ class UserWindow(Screen):
 
             def slow_close():
                 global bt_send_stream
-                while self.claw_PWM > 0.2: # prevents value from ever dropping below zero
+                while self.claw_PWM < 2500: # prevents value from ever dropping below zero
                     if bt_send_stream != None:
-                        self.claw_PWM = self.claw_PWM - 0.1
+                        self.claw_PWM = self.claw_PWM + 50
                         bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
-                        time.sleep(1/30) 
+                        time.sleep(0.1) 
                     else:
-                        self.claw_PWM = self.claw_PWM - 0.1
+                        self.claw_PWM = self.claw_PWM + 50
                         print(str(self.claw_PWM))
-                        time.sleep(1/30) 
+                        time.sleep(0.1) 
 
             self.killable_thread_claw_movement = ThreadTracing.thread_with_trace(target = slow_close)
             self.killable_thread_claw_movement.start()
@@ -224,15 +566,15 @@ class UserWindow(Screen):
 
             def slow_raise():
                 global bt_send_stream
-                while self.arm_PWM < 9.8: # prevents value from ever getting above 10
+                while self.arm_PWM > 750 : # prevents value from ever getting above 10
                     if bt_send_stream != None:
-                        self.arm_PWM = self.arm_PWM + 0.1
+                        self.arm_PWM = self.arm_PWM - 25
                         bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
-                        time.sleep(1/30) 
+                        time.sleep(0.1) 
                     else:
-                        self.arm_PWM = self.arm_PWM + 0.1
+                        self.arm_PWM = self.arm_PWM - 25
                         print(str(self.arm_PWM))
-                        time.sleep(1/30) 
+                        time.sleep(0.1) 
 
             self.killable_thread_arm_movement = ThreadTracing.thread_with_trace(target = slow_raise)
             self.killable_thread_arm_movement.start()
@@ -242,15 +584,15 @@ class UserWindow(Screen):
 
             def slow_lower():
                 global bt_send_stream
-                while self.arm_PWM > 3.2: # prevents value from ever dropping below 3
+                while self.arm_PWM < 2000: # prevents value from ever dropping below 3
                     if bt_send_stream != None:
-                        self.arm_PWM = self.arm_PWM - 0.1
+                        self.arm_PWM = self.arm_PWM + 25
                         bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
-                        time.sleep(1/30) 
+                        time.sleep(0.1) 
                     else:
-                        self.arm_PWM = self.arm_PWM - 0.1
+                        self.arm_PWM = self.arm_PWM + 25
                         print(str(self.arm_PWM))
-                        time.sleep(1/30) 
+                        time.sleep(0.1) 
 
             self.killable_thread_arm_movement = ThreadTracing.thread_with_trace(target = slow_lower)
             self.killable_thread_arm_movement.start()
@@ -301,7 +643,11 @@ class BluetoothWindow(Screen):
         super().__init__(**kw)
         self.service_buttons = []
         self.num_elems_in_1screen = 3
-            
+    
+    def kill_pi_power(self):
+        global bt_send_stream
+        print("sending kill command")
+        bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
 
     def scan_paired(self):
         # searches saved paired devices and the services available on when it was paired
@@ -351,9 +697,9 @@ class BluetoothWindow(Screen):
 
                 # change the size of each button's text if the windows size changes (button width changes if window width changes)
                 def resize_button_text_if_window_changes(button, new_width):
-                    button.font_size = button.width / (7 * self.num_elems_in_1screen)
+                    button.font_size = button.width / (10 * self.num_elems_in_1screen)
                     if (self.num_elems_in_1screen <= 2 ):
-                        button.font_size = button.width / (10 * self.num_elems_in_1screen)
+                        button.font_size = button.width / (25) # font size independent once it spans entire button
                 self.service_buttons[button_itr].bind(width=resize_button_text_if_window_changes) # when info.height changes run this routine
 
                 self.ids.grid1.add_widget(self.service_buttons[button_itr])
@@ -362,9 +708,9 @@ class BluetoothWindow(Screen):
         # change the size of each button's text if the number of elements changes in the grid
         def resize_label_text_if_elements_changes(grid, new_width):
             for x in range(len(self.service_buttons)):
-                self.service_buttons[x].font_size = self.service_buttons[x].width / (7 * self.num_elems_in_1screen)
+                self.service_buttons[x].font_size = self.service_buttons[x].width / (10 * self.num_elems_in_1screen)
                 if (self.num_elems_in_1screen <= 2):
-                    self.service_buttons[x].font_size = self.service_buttons[x].width / (10 * self.num_elems_in_1screen)
+                    self.service_buttons[x].font_size = self.service_buttons[x].width / (25)
         self.ids.grid1.bind(row_default_height = resize_label_text_if_elements_changes)
         
         self.ids.PageStatus_LabelObj.text = "Ready"

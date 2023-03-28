@@ -22,7 +22,7 @@ WindowManager: # root rule (can be any widget)
 
         Image:
             source: 'Images_Used/BNT_Logo.png'
-            pos_hint: {'x': 0.005, 'y': 0.01}
+            pos_hint: {'x': 0.03, 'y': 0.01}
             size_hint: 0.0875, .075
             keep_ratio: True
             canvas.before:
@@ -148,7 +148,7 @@ WindowManager: # root rule (can be any widget)
             text: "Unconnected"
             font_size: self.width/8
             size_hint: 0.15, 0.075
-            pos_hint: {'x': 0.01, 'top': 0.99}
+            pos_hint: {'x': 0.03, 'top': 0.99}
             color: '#b5f7e6'
             canvas.before:
                 Color:
@@ -375,14 +375,14 @@ WindowManager: # root rule (can be any widget)
             state:'down'
             pos_hint: {'x': .03, 'y': .72}
             size_hint: .1, .08
-            on_press: self.state = 'down'
+            on_press: root.tilt_handler(0)
         ToggleButton:
             text: 'TILT'
             font_size: root.width / 35
             group: 'ctrl_type'
             pos_hint: {'x': .13, 'y': .72}
             size_hint: .1, .08
-            on_press: self.state = 'down'
+            on_press: root.tilt_handler(1)
 
     
 
@@ -402,7 +402,7 @@ WindowManager: # root rule (can be any widget)
             text: "Unconnected"
             font_size: self.width/8
             size_hint: 0.15, 0.075
-            pos_hint: {'x': 0.01, 'top': 0.99}
+            pos_hint: {'x': 0.03, 'top': 0.99}
             color: '#b5f7e6'
             canvas.before:
                 Color:
@@ -525,7 +525,7 @@ WindowManager: # root rule (can be any widget)
 
         Image:
             source: 'Images_Used/BNT_Logo.png'
-            pos_hint: {'x': 0.005, 'y': 0.01}
+            pos_hint: {'x': 0.03, 'y': 0.01}
             size_hint: 0.0875, .075
             keep_ratio: True
             canvas.before:
@@ -543,153 +543,184 @@ WindowManager: # root rule (can be any widget)
         allow_stretch: True
         keep_ratio: False
 
-    GridLayout:
-        cols: 2
-        
-        FloatLayout:
-            size: root.width, root.height
 
-            Label:
-                text: "Bluetooth Connections"
-                size_hint: 1, .1
-                pos_hint: {'x': 0, 'top': 0.90}
-                font_size: self.width/15
+    FloatLayout:
+        Label:
+            text: "Bluetooth     ------------\n-------     Connections"
+            size_hint: .3, .1
+            pos_hint: {'x': 0.05, 'top': 0.87}
+            font_size: root.width/30
+            halign: 'center'
 
-            Label:
-                id: PageStatus_LabelObj
-                text: "Ready"
-                font_size: self.width/8
-                size_hint: 0.3, 0.075
-                pos_hint: {'x': 0.01, 'top': 0.99}
-                color: '#b5f7e6'
-                canvas.before:
-                    Color:
-                        rgba: utils.get_color_from_hex('#266352')
-                    Rectangle:
-                        size: self.size
-                        pos: self.pos
+        Label:
+            id: PageStatus_LabelObj
+            text: "Ready"
+            font_size: self.width/8
+            size_hint: 0.15, 0.075
+            pos_hint: {'x': 0.03, 'top': 0.99}
+            color: '#b5f7e6'
+            canvas.before:
+                Color:
+                    rgba: utils.get_color_from_hex('#266352')
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+        Button:
+            id: KillPi_ButtonObj
+            pos_hint: {'right': 0.99, 'top': 0.99}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .125, .125
+            disabled: True
+            on_press:
+                self.parent.parent.kill_pi_power()
             
-            Button:
-                id: ScanDevice_ButtonObj
-                text: "Display Known\nSevices"
-                halign: 'center'
-                font_size: self.width/16
-                on_press: self.parent.parent.parent.scan_paired()
-                size_hint: 0.7, 0.15
-                pos_hint: {'x': 0.15, 'top': 0.75}
-                background_normal: ''
-                background_color: '#266352'
+            Image:
+                source: 'Images_Used/power_button.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width
+                height: self.parent.height * 0.9
+                keep_ratio: False
 
-            GridLayout:
-                cols: 2
-                size_hint: 0.9, 0.3
-                pos_hint: {'x': 0.05, 'top': 0.55}
-
-                Button:
-                    text: "replace with\n device dropdown"
-                    font_size: self.width/10
-
-                Label:
-                    text: "Don't see\nyour service?\n\nRe-pair within\nAndroid OS"
-                    font_size: self.width/10
+        Button:
+            pos_hint: {'right': 0.84, 'top': 0.99}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: 10
+            size_hint: .125, .125
+            disabled: True
+            on_release:
+                root.manager.current = "bluetooth"  
             
-            
+            Image:
+                source: 'Images_Used/bt_screen.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width
+                height: self.parent.height * 0.9
+                keep_ratio: False
 
-            Button:
-                pos_hint: {'x': 0.54, 'top': 0.2}
-                background_normal: ''
-                background_color: '#266352'
-                font_size: self.width / 8
-                size_hint: .25, .125
-                on_release:
-                    root.manager.current = "calibration" 
-
-                Image:
-                    source: 'Images_Used/calibration_screen.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y
-                    width: self.parent.width
-                    height: self.parent.height * 0.9
-                    keep_ratio: False
-
-            Button:
-                pos_hint: {'x': 0.21, 'top': 0.2}
-                background_normal: ''
-                background_color: '#266352'
-                font_size: self.width / 8
-                size_hint: .25, .125
-                on_release:
-                    root.manager.current = "userWindow" 
-
-                Image:
-                    source: 'Images_Used/control_screen.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y
-                    width: self.parent.width
-                    height: self.parent.height * 0.9
-                    keep_ratio: False
+        Button:
+            pos_hint: {'right': 0.69, 'top': 0.99}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: self.width / 8
+            size_hint: .125, .125
+            on_release:
+                root.manager.current = "calibration" 
 
             Image:
-                source: 'Images_Used/BNT_Logo.png'
-                pos_hint: {'x': 0.01, 'y': 0.01}
-                size_hint: 0.175, .075
-                keep_ratio: True
-                canvas.before:
-                    Color:
-                        rgba: utils.get_color_from_hex('#010623')
-                    Rectangle:
-                        size: self.size
-                        pos: self.pos
+                source: 'Images_Used/calibration_screen.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width
+                height: self.parent.height * 0.9
+                keep_ratio: False
 
+        Button:
+            pos_hint: {'right': 0.54, 'top': 0.99}
+            background_normal: ''
+            background_color: '#266352'
+            font_size: self.width / 8
+            size_hint: .125, .125
+            on_release:
+                root.manager.current = "userWindow" 
+
+            Image:
+                source: 'Images_Used/control_screen.png'
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+                width: self.parent.width
+                height: self.parent.height * 0.9
+                keep_ratio: False
         
-        FloatLayout:
+        Button:
+            id: ScanDevice_ButtonObj
+            text: "Display Known\nSevices"
+            halign: 'center'
+            font_size: root.width/60
+            on_press: root.scan_paired()
+            size_hint: 0.125, 0.125
+            pos_hint: {'x': 0.1375, 'top': 0.7}
+            background_normal: ''
+            background_color: '#266352'
+
+        GridLayout:
+            cols: 2
+            size_hint: 0.3, 0.40
+            pos_hint: {'x': 0.05, 'top': 0.525}
+
+            Button:
+                text: "replace with\n device dropdown"
+                font_size: self.width/10
+
+            Label:
+                text: "Don't see\nyour service?\n\nRe-pair within\nAndroid OS"
+                font_size: self.width/10
+            
+            
+        Image:
+            source: 'Images_Used/BNT_Logo.png'
+            pos_hint: {'x': 0.03, 'y': 0.01}
+            size_hint: 0.0875, .075
+            keep_ratio: True
+            canvas.before:
+                Color:
+                    rgba: utils.get_color_from_hex('#010623')
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+    
+        GridLayout:
+            cols: 3
+            size_hint: 0.6, 0.1
+            pos_hint: {'x': 0.35, 'top': 0.8}
+
+            GridLayout: 
+                rows: 2
+
+                Label:
+                    text: "Results"
+                    font_size: root.width/35
+
+                Label:
+                    id: NumResults_LabelObj
+                    text: "(3 per page)"
+                    font_size: root.width/50
+
+            Button:
+                text: "+1 Item"
+                on_press: root.increment_elem()
+                font_size: root.width/40
+
+            Button:
+                text: "-1 Item"
+                on_press: root.decrement_elem()
+                font_size: root.width/40
+
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            id: ScanResults_ScrollViewObj
+            size_hint: 0.6, 0.62
+            pos_hint: {'x': 0.35, 'top': 0.67}
+            canvas.before:
+                Color:
+                    rgba: (utils.get_color_from_hex('#266352'))
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
 
             GridLayout:
-                cols: 3
-                size_hint: 0.95, 0.1
-                pos_hint: {'x': 0, 'top': 0.95}
-
-                GridLayout: 
-                    rows: 2
-
-                    Label:
-                        text: "Results"
-                        font_size: self.width/5
-
-                    Label:
-                        id: NumResults_LabelObj
-                        text: "(3 per page)"
-                        font_size: self.width/8
-
-                Button:
-                    text: "+1 Item"
-                    on_press: root.increment_elem()
-                    font_size: self.width/7
-
-                Button:
-                    text: "-1 Item"
-                    on_press: root.decrement_elem()
-                    font_size: self.width/7
-
-
-            ScrollView:
-                do_scroll_x: False
-                do_scroll_y: True
-                id: ScanResults_ScrollViewObj
-                size_hint: 0.95, 0.77
-                pos_hint: {'x': 0, 'top': 0.82}
-                canvas.before:
-                    Color:
-                        rgba: (utils.get_color_from_hex('#266352'))
-                    Rectangle:
-                        size: self.size
-                        pos: self.pos
-
-                GridLayout:
-                    width: self.parent.width
-                    id: grid1
-                    size_hint_x: 1
-                    size_hint_y: None
-                    cols: 1
-                    row_default_height: self.parent.height / 3 
-                    row_force_default: True
+                width: self.parent.width
+                id: grid1
+                size_hint_x: 1
+                size_hint_y: None
+                cols: 1
+                row_default_height: self.parent.height / 3 
+                row_force_default: True
