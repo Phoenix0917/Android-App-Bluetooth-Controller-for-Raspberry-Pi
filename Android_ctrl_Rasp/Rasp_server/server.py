@@ -5,6 +5,15 @@ from gpiozero import Servo
 from time import sleep
 import pigpio
 
+#imports for object detection
+from detecto import core, utils, visualize
+from detecto.visualize import show_labeled_image, plot_prediction_grid
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.patches as patches
+from datetime import datetime
+from picamera import PiCamera
+
 os.system("sudo hciconfig hci0 piscan")
 os.system("echo changed bluetooth advertise setting")
 
@@ -37,6 +46,62 @@ LMpwm.start(0)
 RMpwm.start(0)
 GPIO.output(LMdir, GPIO.LOW)
 GPIO.output(RMdir, GPIO.LOW)
+model = core.Model.load('/content/drive/MyDrive/ECE495/objdetector.pth', ['can', 'sphere', 'cube', 'log'])
+
+
+#Modifying code from detecto so can save image onto pi
+def show_labeled_image_modified(image, boxes, labels=None, path=None):
+    """Show the image along with the specified boxes around detected objects.
+    Also displays each box's label if a list of labels is provided.
+    :param image: The image to plot. If the image is a normalized
+        torch.Tensor object, it will automatically be reverse-normalized
+        and converted to a PIL image for plotting.
+    :type image: numpy.ndarray or torch.Tensor
+    :param boxes: A torch tensor of size (N, 4) where N is the number
+        of boxes to plot, or simply size 4 if N is 1.
+    :type boxes: torch.Tensor
+    :param labels: (Optional) A list of size N giving the labels of
+            each box (labels[i] corresponds to boxes[i]). Defaults to None.
+    :type labels: torch.Tensor or None
+    **Example**::
+        >>> from detecto.core import Model
+        >>> from detecto.utils import read_image
+        >>> from detecto.visualize import show_labeled_image
+        >>> model = Model.load('model_weights.pth', ['tick', 'gate'])
+        >>> image = read_image('image.jpg')
+        >>> labels, boxes, scores = model.predict(image)
+        >>> show_labeled_image(image, boxes, labels)
+    """
+
+    fig, ax = plt.subplots(1)
+    # If the image is already a tensor, convert it back to a PILImage
+    # and reverse normalize it
+    ax.imshow(image)
+    
+
+    # Show a single box or multiple if provided
+    if boxes.ndim == 1:
+        boxes = boxes.view(1, 4)
+
+    if labels is not None and len(labels) ==1:
+        labels = [labels]
+
+    # Plot each box
+    for i in range(boxes.shape[0]):
+        box = boxes[i]
+        width, height = (box[2] - box[0]).item(), (box[3] - box[1]).item()
+        initial_pos = (box[0].item(), box[1].item())
+        rect = patches.Rectangle(initial_pos,  width, height, linewidth=1,
+                                 edgecolor='r', facecolor='none')
+        if labels:
+            ax.text(box[0] + 5, box[1] - 5, '{}'.format(labels[i]), color='red')
+
+        ax.add_patch(rect)
+    
+    if path is not None:
+      plt.savefig(path)
+    
+    plt.show()
 
 
 
@@ -83,7 +148,31 @@ def data_interpreter(val):
                 os.system("sudo shutdown -h now")
             except:
                 os.system("sudo shutdown -h now")
-                
+
+    elif command == 'OD':
+        #Take picture
+        camera = PiCamera()
+        sleep(.5)
+        camera.capture("./picture.jpg")
+        sleep(.5)
+        camera.close()
+        #Read image and output objects in image. Saves picture to folder
+        image = utils.read_image('./picture.jpg') 
+        predictions = model.predict(image)
+        labels, boxes, scores = predictions
+
+        thresh=0.6
+        filtered_indices=np.where(scores>thresh)
+        filtered_scores=scores[filtered_indices]
+        filtered_boxes=boxes[filtered_indices]
+        num_list = filtered_indices[0].tolist()
+        filtered_labels = [labels[i] for i in num_list]
+        
+        #add for loop here to light up LEDs based on what objects are in labels list
+        print(filtered_labels)
+        path = './' +datetime.now().strftime("%d_%m_%Y_%H_%M_%S") + '.png'
+        show_labeled_image_modified(image, filtered_boxes, filtered_labels,path)
+
     return
 
 
