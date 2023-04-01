@@ -5,14 +5,19 @@ from gpiozero import Servo
 from time import sleep
 import pigpio
 
-#imports for object detection
-from detecto import core, utils, visualize
-from detecto.visualize import show_labeled_image, plot_prediction_grid
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.patches as patches
-from datetime import datetime
-from picamera import PiCamera
+#imports won't work on Dylan
+try:
+    #imports for object detection
+    from detecto import core, utils, visualize
+    from detecto.visualize import show_labeled_image, plot_prediction_grid
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib.patches as patches
+    from datetime import datetime
+    from picamera import PiCamera
+    OBJ_DET_ENABLED = True
+except:
+    OBJ_DET_ENABLED = False
 
 os.system("sudo hciconfig hci0 piscan")
 os.system("echo changed bluetooth advertise setting")
@@ -149,7 +154,7 @@ def data_interpreter(val):
             except:
                 os.system("sudo shutdown -h now")
 
-    elif command == 'OD':
+    elif command == 'OD' and OBJ_DET_ENABLED:
         #Take picture
         camera = PiCamera()
         sleep(.5)
