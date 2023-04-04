@@ -369,6 +369,7 @@ WindowManager: # root rule (can be any widget)
             on_press: self.state = 'down'
 
         ToggleButton:
+            id: joystick_ToggleButtonObj
             text: 'JS'
             font_size: root.width / 35
             group: 'ctrl_type'
@@ -377,6 +378,7 @@ WindowManager: # root rule (can be any widget)
             size_hint: .1, .08
             on_press: root.tilt_handler(0)
         ToggleButton:
+            id: tilt_ToggleButtonObj
             text: 'TILT'
             font_size: root.width / 35
             group: 'ctrl_type'

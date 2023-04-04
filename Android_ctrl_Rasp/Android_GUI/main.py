@@ -26,231 +26,7 @@ BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
 BluetoothSocket = autoclass('android.bluetooth.BluetoothSocket')
 UUID = autoclass('java.util.UUID')
 
-
-from plyer.facades import Gyroscope
-from jnius import PythonJavaClass, java_method, cast
-from plyer.platforms.android import activity
-Context = autoclass('android.content.Context')
-Sensor = autoclass('android.hardware.Sensor')
-SensorManager = autoclass('android.hardware.SensorManager')
-
-class GyroscopeSensorListener(PythonJavaClass):
-    __javainterfaces__ = ['android/hardware/SensorEventListener']
-
-    def __init__(self):
-        super().__init__()
-        self.SensorManager = cast(
-            'android.hardware.SensorManager',
-            activity.getSystemService(Context.SENSOR_SERVICE)
-        )
-        self.sensor = self.SensorManager.getDefaultSensor(
-            Sensor.TYPE_GYROSCOPE
-        )
-
-        self.values = [None, None, None]
-
-    def enable(self):
-        self.SensorManager.registerListener(
-            self, self.sensor,
-            SensorManager.SENSOR_DELAY_NORMAL
-        )
-
-    def disable(self):
-        self.SensorManager.unregisterListener(self, self.sensor)
-
-    @java_method('(Landroid/hardware/SensorEvent;)V')
-    def onSensorChanged(self, event):
-        self.values = event.values[:3]
-
-    @java_method('(Landroid/hardware/Sensor;I)V')
-    def onAccuracyChanged(self, sensor, accuracy):
-        # Maybe, do something in future?
-        pass
-
-
-class GyroUncalibratedSensorListener(PythonJavaClass):
-    __javainterfaces__ = ['android/hardware/SensorEventListener']
-
-    def __init__(self):
-        super().__init__()
-        service = activity.getSystemService(Context.SENSOR_SERVICE)
-        self.SensorManager = cast('android.hardware.SensorManager', service)
-
-        self.sensor = self.SensorManager.getDefaultSensor(
-            Sensor.TYPE_GYROSCOPE_UNCALIBRATED)
-        self.values = [None, None, None, None, None, None]
-
-    def enable(self):
-        self.SensorManager.registerListener(
-            self, self.sensor,
-            SensorManager.SENSOR_DELAY_NORMAL
-        )
-
-    def disable(self):
-        self.SensorManager.unregisterListener(self, self.sensor)
-
-    @java_method('(Landroid/hardware/SensorEvent;)V')
-    def onSensorChanged(self, event):
-        self.values = event.values[:6]
-
-    @java_method('(Landroid/hardware/Sensor;I)V')
-    def onAccuracyChanged(self, sensor, accuracy):
-        pass
-
-
-class AndroidGyroscope(Gyroscope):
-    def __init__(self):
-        super().__init__()
-        self.bState = False
-
-    def _enable(self):
-        if (not self.bState):
-            self.listenerg = GyroscopeSensorListener()
-            self.listenergu = GyroUncalibratedSensorListener()
-            self.listenerg.enable()
-            self.listenergu.enable()
-            self.bState = True
-
-    def _disable(self):
-        if (self.bState):
-            self.bState = False
-            self.listenerg.disable()
-            self.listenergu.disable()
-            del self.listenerg
-            del self.listenergu
-
-    def _get_orientation(self):
-        if (self.bState):
-            return tuple(self.listenerg.values)
-        else:
-            return (None, None, None)
-
-    def _get_rotation_uncalib(self):
-        if (self.bState):
-            return tuple(self.listenergu.values)
-        else:
-            return (None, None, None, None, None, None)
-
-    def __del__(self):
-        if self.bState:
-            self._disable()
-        super().__del__()
-
-
-from jnius import autoclass
-from jnius import cast
-from jnius import java_method
-from jnius import PythonJavaClass
-from plyer.platforms.android import activity
-from plyer.facades import SpatialOrientation
-
-Context = autoclass('android.content.Context')
-Sensor = autoclass('android.hardware.Sensor')
-SensorManager = autoclass('android.hardware.SensorManager')
-
-
-class AccelerometerSensorListener(PythonJavaClass):
-    __javainterfaces__ = ['android/hardware/SensorEventListener']
-
-    def __init__(self):
-        super().__init__()
-        self.SensorManager = cast(
-            'android.hardware.SensorManager',
-            activity.getSystemService(Context.SENSOR_SERVICE)
-        )
-        self.sensor = self.SensorManager.getDefaultSensor(
-            Sensor.TYPE_ACCELEROMETER
-        )
-        self.values = [None, None, None]
-
-    def enable(self):
-        self.SensorManager.registerListener(
-            self, self.sensor,
-            SensorManager.SENSOR_DELAY_NORMAL
-        )
-
-    def disable(self):
-        self.SensorManager.unregisterListener(self, self.sensor)
-
-    @java_method('(Landroid/hardware/SensorEvent;)V')
-    def onSensorChanged(self, event):
-        self.values = event.values[:3]
-
-    @java_method('(Landroid/hardware/Sensor;I)V')
-    def onAccuracyChanged(self, sensor, accuracy):
-        pass
-
-
-class MagnetometerSensorListener(PythonJavaClass):
-    __javainterfaces__ = ['android/hardware/SensorEventListener']
-
-    def __init__(self):
-        super().__init__()
-        service = activity.getSystemService(Context.SENSOR_SERVICE)
-        self.SensorManager = cast('android.hardware.SensorManager', service)
-
-        self.sensor = self.SensorManager.getDefaultSensor(
-            Sensor.TYPE_MAGNETIC_FIELD)
-        self.values = [None, None, None]
-
-    def enable(self):
-        self.SensorManager.registerListener(
-            self, self.sensor,
-            SensorManager.SENSOR_DELAY_NORMAL
-        )
-
-    def disable(self):
-        self.SensorManager.unregisterListener(self, self.sensor)
-
-    @java_method('(Landroid/hardware/SensorEvent;)V')
-    def onSensorChanged(self, event):
-        self.values = event.values[:3]
-
-    @java_method('(Landroid/hardware/Sensor;I)V')
-    def onAccuracyChanged(self, sensor, accuracy):
-        pass
-
-
-class AndroidSpOrientation(SpatialOrientation):
-
-    def __init__(self):
-        self.state = False
-
-    def _get_orientation(self):
-        if self.state:
-            rotation = [0] * 9
-            inclination = [0] * 9
-            gravity = []
-            geomagnetic = []
-            gravity = self.listener_a.values
-            geomagnetic = self.listener_m.values
-            if gravity[0] is not None and geomagnetic[0] is not None:
-                ff_state = SensorManager.getRotationMatrix(
-                    rotation, inclination,
-                    gravity, geomagnetic
-                )
-                if ff_state:
-                    values = [0, 0, 0]
-                    values = SensorManager.getOrientation(
-                        rotation, values
-                    )
-                return values
-
-    def _enable_listener(self, **kwargs):
-        if not self.state:
-            self.listener_a = AccelerometerSensorListener()
-            self.listener_m = MagnetometerSensorListener()
-            self.listener_a.enable()
-            self.listener_m.enable()
-            self.state = True
-
-    def _disable_listener(self, **kwargs):
-        if self.state:
-            self.listener_a.disable()
-            self.listener_m.disable()
-            self.state = False
-            delattr(self, 'listener_a')
-            delattr(self, 'listener_m')
+import SpatialOrientationSensor as soSense
 
 
 # can set default window size (for developing when not on final device)
@@ -301,18 +77,11 @@ class UserWindow(Screen):
         self.killable_thread_claw_movement = None
         self.claw_PWM = 2500
         self.killable_thread_arm_movement = None
-<<<<<<< HEAD
         self.arm_PWM = 1500
 
-        self.killable_thread_gyro_movement = None
-        self.sensor_manager = cast('android.hardware.SensorManager', activity.getSystemService(Context.SENSOR_SERVICE))
-        self.rotation_sensor = self.sensor_manager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-        self.values = [None, None, None]
-        self.myGyro = AndroidGyroscope()
-        self.mySense = AndroidSpOrientation()
-=======
-        self.arm_PWM = 750
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
+        self.killable_thread_orientation_movement = None
+        self.sensor = soSense.AndroidSpOrientation()
+        self.sensor_is_already_enabled = 0
 
     def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
         self.ids.Control_JoystickObj.bind(pad = self.JoystickHandler)
@@ -410,42 +179,40 @@ class UserWindow(Screen):
             print(str(ang)[0:5] + ":      " + str(LM)[0:5] + "             " + str(RM)[0:5] )
 
     def tilt_handler(self, enable):
-        self.state = 'down'
         if enable == 1:
-            #self.sensor_manager.registerListener(self, self.rotation_sensor, SensorManager.SENSOR_DELAY_NORMAL)
-            #self.myGyro._enable()
-            self.mySense._enable_listener()
-            #myGyroData = self.myGyro._get_orientation()
-            #print(str(myGyroData))
-            self.killable_thread_gyro_movement = ThreadTracing.thread_with_trace(target = self.print_gyro_info)
-            self.killable_thread_gyro_movement.start()
+            self.ids.tilt_ToggleButtonObj.state = 'down'
+            if self.sensor_is_already_enabled  == 0: # not already enabled
+                self.sensor_is_already_enabled = 1
+                self.sensor._enable_listener()
+                self.killable_thread_orientation_movement = ThreadTracing.thread_with_trace(target = self.spatial_orientation_interpreter)
+                self.killable_thread_orientation_movement.start()
 
         else: #enable = 0
-            #self.sensor_manager.unregisterListener(self, self.rotation_sensor)
-            self.killable_thread_gyro_movement.kill()
-            #self.myGyro._disable()
-            self.mySense._disable_listener()
+            self.ids.joystick_ToggleButtonObj.state = 'down'
+            if self.sensor_is_already_enabled == 1: # not already disabled
+                self.sensor_is_already_enabled = 0
+                self.killable_thread_orientation_movement.kill()
+                #self.killable_thread_orientation_movement.join() # don't really need to block and wait for kill to finish as it will not affect GUI, just may send an extra data set to pi
+                self.sensor._disable_listener()
 
 
     def print_gyro_info(self):
         while True:
-            #myGyroData = self.myGyro._get_orientation()
-            #print(str(myGyroData))
-            myOrData = self.mySense._get_orientation()
-            print(type(myOrData))
-            print(str(myOrData) + "    + " + str(myOrData[0] + myOrData[2]) + "    - " + str(myOrData[0] - myOrData[2]) + "    - " + str(myOrData[2] - myOrData[0]))
-
+            myOrData = self.sensor._get_orientation()
+            try:
+                print(type(myOrData))
+                print(str(myOrData) + "    + " + str(myOrData[0] + myOrData[2]) + "    - " + str(myOrData[0] - myOrData[2]) + "    - " + str(myOrData[2] - myOrData[0]))
+            except:
+                pass
             time.sleep(1)
 
-    #@java_method('(Landroid/hardware/SensorEvent;)V')
-    #def 
     
-    '''
+    
     def spatial_orientation_interpreter(self):
         RM = LM = 0
         pi = 3.14
         while True:
-            orientation_data = self.mySense._get_orientation() # returns in radians
+            orientation_data = self.sensor._get_orientation() # returns in radians
             try: # on start up can return (None, None, None)
                 orientation_data[0] = orientation_data[0] * 180 / pi
                 orientation_data[1] = orientation_data[1] * 180 / pi
@@ -454,22 +221,24 @@ class UserWindow(Screen):
                 if orientation_data[1] >=0:
                     print("Full Forward")
                     RM = LM = 100
-                elif orientation_data[1] < 0 and orientation_data[2] >= -60:
+                elif orientation_data[1] < 0 and orientation_data[1] >= -60:
                     print("Partial Forward")
                     
                     # 0 --> LM = 100, RM = 100
                     # -60 --> LM= 0, RM = 0
                     # y = 5/3x + 100
-                    RM = LM = ((5/3) * orientation_data[2]) + 100
+                    RM = LM = ((5/3) * orientation_data[1]) + 100
 
                 elif orientation_data[1] < -60:
                     print("Full Stop")
                     RM = LM = 0
 
+                MAX = RM # don't want reverse motor speed to ever be more than the forward, for most sharp turn they should equel
+
                 # only attempt turn interpretation if phone is at greater than -70 degree angle
                 if orientation_data[1] > -70:
                     if orientation_data[2] >= 70:
-                        RM = RM * -1
+                        RM = -MAX
                         print("Full Right")
 
                     elif orientation_data[2] > 10 and orientation_data[2] < 70:
@@ -477,22 +246,34 @@ class UserWindow(Screen):
                         # 70 --> LM = 100, RM = -100
                         # 10 --> LM= 100, RM = 100
                         # y = -10/3x + 133.3333
-                        RM = (-(10/3)) * orientation_data[2] + 133 + (1/3)
+                        # RM = (-(10/3)) * orientation_data[2] + 133 + (1/3)
+
+                        # 70 --> LM = MAX, RM = -MAX
+                        # 10 --> LM= MAX, RM = MAX
+                        slope = (-MAX - MAX) / (70 - 10)
+                        intercept = MAX - (slope * 10)
+                        RM = slope * orientation_data[2] + intercept
 
                     elif orientation_data[2] >= -10 and orientation_data[2] <= 10:
                         print("No Turn")
-                        # don't touch RM or LM
+                        # don't touch RM or LM, both = MAX
 
                     elif orientation_data[2] > -70 and orientation_data[2] < -10:
                         print("Partial Left")
                         # -70 --> LM = -100, RM = 100
                         # -10 --> LM = 100, RM = 100
                         # y = -10/3x + 133.3333
-                        LM = (10/3) * orientation_data[2] + 133 + (1/3)
+                        #LM = (10/3) * orientation_data[2] + 133 + (1/3)
+
+                        # -70 --> LM = -MAX, RM = MAX
+                        # -10 --> LM= MAX, RM = MAX
+                        slope = (MAX - -MAX) / (-10 - -70)
+                        intercept = MAX + (slope * 10)
+                        LM = slope * orientation_data[2] + intercept
 
                     elif orientation_data[2] <= -70:
                         print("Full Left")
-                        LM = LM * -1
+                        LM = -MAX
                         
                 print(str(orientation_data))
             except:
@@ -507,8 +288,7 @@ class UserWindow(Screen):
                 print(str(LM)[0:5] + "             " + str(RM)[0:5] )
 
 
-            time.sleep(1)
-    '''
+            time.sleep(.1)
 
 
     def kill_pi_power(self):
@@ -523,23 +303,13 @@ class UserWindow(Screen):
 
             def slow_open():
                 global bt_send_stream
-<<<<<<< HEAD
                 while self.claw_PWM > 500: # prevents value from ever getting above 12
                     if bt_send_stream != None:
                         self.claw_PWM = self.claw_PWM - 50
-=======
-                while self.claw_PWM < 2500: # prevents value from ever getting above 2500
-                    if bt_send_stream != None:
-                        self.claw_PWM = self.claw_PWM + 50
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
                         time.sleep(0.1) 
                     else:
-<<<<<<< HEAD
                         self.claw_PWM = self.claw_PWM - 50
-=======
-                        self.claw_PWM = self.claw_PWM + 50
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         print(str(self.claw_PWM))
                         time.sleep(0.1) 
 
@@ -551,23 +321,13 @@ class UserWindow(Screen):
 
             def slow_close():
                 global bt_send_stream
-<<<<<<< HEAD
                 while self.claw_PWM < 2500: # prevents value from ever dropping below zero
                     if bt_send_stream != None:
                         self.claw_PWM = self.claw_PWM + 50
-=======
-                while self.claw_PWM > 500: # prevents value from ever dropping below 500
-                    if bt_send_stream != None:
-                        self.claw_PWM = self.claw_PWM - 50
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
                         time.sleep(0.1) 
                     else:
-<<<<<<< HEAD
                         self.claw_PWM = self.claw_PWM + 50
-=======
-                        self.claw_PWM = self.claw_PWM - 50
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         print(str(self.claw_PWM))
                         time.sleep(0.1) 
 
@@ -590,23 +350,13 @@ class UserWindow(Screen):
 
             def slow_raise():
                 global bt_send_stream
-<<<<<<< HEAD
                 while self.arm_PWM > 750 : # prevents value from ever getting above 10
                     if bt_send_stream != None:
                         self.arm_PWM = self.arm_PWM - 25
-=======
-                while self.arm_PWM < 2000: # prevents value from ever getting above 2000
-                    if bt_send_stream != None:
-                        self.arm_PWM = self.arm_PWM + 25
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
                         time.sleep(0.1) 
                     else:
-<<<<<<< HEAD
                         self.arm_PWM = self.arm_PWM - 25
-=======
-                        self.arm_PWM = self.arm_PWM + 25
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         print(str(self.arm_PWM))
                         time.sleep(0.1) 
 
@@ -618,23 +368,13 @@ class UserWindow(Screen):
 
             def slow_lower():
                 global bt_send_stream
-<<<<<<< HEAD
                 while self.arm_PWM < 2000: # prevents value from ever dropping below 3
                     if bt_send_stream != None:
                         self.arm_PWM = self.arm_PWM + 25
-=======
-                while self.arm_PWM > 750: # prevents value from ever dropping below 750
-                    if bt_send_stream != None:
-                        self.arm_PWM = self.arm_PWM - 25
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
                         time.sleep(0.1) 
                     else:
-<<<<<<< HEAD
                         self.arm_PWM = self.arm_PWM + 25
-=======
-                        self.arm_PWM = self.arm_PWM - 25
->>>>>>> 7583bd8f451d362ea9f93a7c59fb33bea72e0cd8
                         print(str(self.arm_PWM))
                         time.sleep(0.1) 
 
