@@ -390,6 +390,10 @@ class UserWindow(Screen):
         else:
             print("Invalid instruction passed")
 
+    def detect_object(self):
+      if bt_send_stream != None:
+        bt_send_stream.write(bytes("OD:" + str(1 ) + '*', 'utf-8'))
+
 class CalibrationWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)

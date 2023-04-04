@@ -291,6 +291,8 @@ WindowManager: # root rule (can be any widget)
             background_normal: ''
             background_color: '#266352'
             size_hint: .125, .125
+            on_press:
+                root.detect_object()
 
         Button:
             text: "Start\n(Maze)"
