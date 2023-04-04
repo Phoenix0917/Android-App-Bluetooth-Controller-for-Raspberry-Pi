@@ -292,7 +292,7 @@ WindowManager: # root rule (can be any widget)
             background_color: '#266352'
             size_hint: .125, .125
             on_press:
-                root.detect_object()
+                root.object_detect()
 
         Button:
             text: "Start\n(Maze)"
@@ -303,14 +303,17 @@ WindowManager: # root rule (can be any widget)
             background_color: '#266352'
             size_hint: .125, .125
 
-        Button:
+        ToggleButton:
             text: "Start\n(Detection)"
+            id: MetalDetect_ToggleButtonObj
             pos_hint: {'right': 0.99, 'y': 0.49}
             font_size: root.width / 50
             halign: "center"
             background_normal: ''
             background_color: '#266352'
             size_hint: .125, .125
+            on_press: 
+                root.metal_detect()
 
         Slider:
             id: PwmMultiplier_SliderObj

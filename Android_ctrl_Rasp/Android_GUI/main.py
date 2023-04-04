@@ -390,9 +390,20 @@ class UserWindow(Screen):
         else:
             print("Invalid instruction passed")
 
-    def detect_object(self):
+    def object_detect(self):
       if bt_send_stream != None:
         bt_send_stream.write(bytes("OD:" + str(1 ) + '*', 'utf-8'))
+
+    def metal_detect(self):
+        if self.ids.MetalDetect_ToggleButtonObj.state == 'down':
+            self.ids.MetalDetect_ToggleButtonObj.text = "Stop\n(Detection)"
+            if bt_send_stream != None:
+                bt_send_stream.write(bytes("MD:" + str(1) + '*', 'utf-8'))
+        else:
+            self.ids.MetalDetect_ToggleButtonObj.text = "Start\n(Detection)"
+            if bt_send_stream != None:
+                bt_send_stream.write(bytes("MD:" + str(0) + '*', 'utf-8'))
+
 
 class CalibrationWindow(Screen):
     def __init__(self, **kw):
