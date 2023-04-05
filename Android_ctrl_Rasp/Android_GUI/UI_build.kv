@@ -3,6 +3,59 @@
 #: import utils kivy.utils
 #: import Joystick kivy.garden.joystick.Joystick
 
+
+
+#:import Factory kivy.factory.Factory
+
+<CustomSpinnerOptions@SpinnerOption>:
+    #background_normal: ''
+    #background_color: 0, 0, 1, 1      # blue
+    background_normal: ''
+    background_color: .4, .4, .4, 1      # gray
+    font_size: root.width/10
+    halign: 'left'
+    #on_release: 
+        #self.background_color=1, 1, 0, 1    # yellow
+    canvas.before:
+        Color:
+            rgba: .25, .25, .25, 1      # dark gray
+        Rectangle:
+            size: self.width, self.height * 1.05
+            pos: self.pos
+
+
+
+<CustomDropdown@DropDown>:
+    max_height: 400
+    bar_width: 5
+    bar_color: 0, 1, 0, 1   # green
+    bar_inactive_color: 1, 0, 0, 1  # red        
+    effect_cls: 'ScrollEffect'
+    scroll_type: ['bars', 'content']
+
+
+<CustomSpinner@Spinner>:
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    background_normal: ''
+    background_color: '#266352'  # white
+    #color: 0, 0, 0, 1
+
+    text: "Filter By Device (All)"
+    values: [ "Filter By Device (All)"]
+
+    sync_height: True
+
+    dropdown_cls: Factory.CustomDropdown
+    option_cls: Factory.CustomSpinnerOptions
+
+
+
 WindowManager: # root rule (can be any widget)
     transition: FadeTransition()
     CalibrationWindow: # class inside window manager
@@ -555,7 +608,7 @@ WindowManager: # root rule (can be any widget)
         Label:
             text: "Bluetooth     ------------\n-------     Connections"
             size_hint: .3, .1
-            pos_hint: {'x': 0.05, 'top': 0.87}
+            pos_hint: {'x': 0.05, 'top': 0.85}
             font_size: root.width/30
             halign: 'center'
 
@@ -651,18 +704,33 @@ WindowManager: # root rule (can be any widget)
             font_size: root.width/60
             on_press: root.scan_paired()
             size_hint: 0.125, 0.125
-            pos_hint: {'x': 0.1375, 'top': 0.7}
+            pos_hint: {'x': 0.2, 'top': 0.67}
             background_normal: ''
             background_color: '#266352'
+
+        CustomSpinner:
+            id: devices_CustomSpinnerObj
+            on_release: root.display_devices()
+            size_hint: .15, .125
+            pos_hint: {'x': 0.03, 'top':.67}
+            #max_height: self.height*3
+            font_size: root.width/65
+            on_text:
+                root.set_filter(self.text)
+            canvas.before:
+                Color:
+                    rgba: (.25, .25, .25, 1)
+                Rectangle:
+                    size: self.width *1.05, self.height * 4.05
+                    pos: self.center_x - (self.width *1.05 /2), self.top - self.height * 4
 
         GridLayout:
             cols: 2
             size_hint: 0.3, 0.40
-            pos_hint: {'x': 0.05, 'top': 0.525}
-
-            Button:
-                text: "replace with\n device dropdown"
-                font_size: self.width/10
+            pos_hint: {'x': 0.03, 'top': 0.525}
+            
+            Label:
+                text: ''
 
             Label:
                 text: "Don't see\nyour service?\n\nRe-pair within\nAndroid OS"
@@ -674,12 +742,6 @@ WindowManager: # root rule (can be any widget)
             pos_hint: {'x': 0.03, 'y': 0.01}
             size_hint: 0.0875, .075
             keep_ratio: True
-            canvas.before:
-                Color:
-                    rgba: utils.get_color_from_hex('#010623')
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
 
     
         GridLayout:

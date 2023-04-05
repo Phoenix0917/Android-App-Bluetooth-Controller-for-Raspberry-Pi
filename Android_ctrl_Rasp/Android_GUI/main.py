@@ -442,6 +442,7 @@ class BluetoothWindow(Screen):
         super().__init__(**kw)
         self.service_buttons = []
         self.num_elems_in_1screen = 3
+        self.active_filter = "Filter By Device (All)"
     
     def kill_pi_power(self):
         global bt_send_stream
@@ -451,18 +452,33 @@ class BluetoothWindow(Screen):
     def scan_paired(self):
         # searches saved paired devices and the services available on when it was paired
         
-        number_of_uuids = 0 # used to determine how many rows to create in gridLayout
-        print("    *** Starting BT Paired Scan")
-        paired_devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices().toArray()
-        print("    *** Finished BT Paired Scan")
-        print("   *** ")
-        for paired_device in paired_devices:
-            print("    *** " + str(paired_device.getName()))
+        if self.active_filter == "Filter By Device (All)":
+            number_of_uuids = 0 # used to determine how many rows to create in gridLayout
+            print("    *** Starting BT Paired Scan")
+            paired_devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices().toArray()
+            print("    *** Finished BT Paired Scan")
+            print("   *** ")
+            for paired_device in paired_devices:
+                print("    *** " + str(paired_device.getName()))
+                IDs = paired_device.getUuids()
+                for ID in IDs:
+                    print("    ***" + str(ID.toString()))
+                    number_of_uuids = number_of_uuids + 1
+            print("   *** ")        
+        else: # some other device is being used to filter by
+            number_of_uuids = 0 # used to determine how many rows to create in gridLayout
+            print("    *** Starting BT Paired Scan")
+            paired_devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices().toArray()
+            print("    *** Finished BT Paired Scan")
+            print("   *** ")
+            for paired_device in paired_devices:
+                if  self.active_filter == str(paired_device.getName()):
+                    break
             IDs = paired_device.getUuids()
             for ID in IDs:
                 print("    ***" + str(ID.toString()))
                 number_of_uuids = number_of_uuids + 1
-        print("   *** ")        
+            print("   *** ")       
 
         # clean out any prior widgets and data associated with them
         self.ids.grid1.clear_widgets()
@@ -484,8 +500,28 @@ class BluetoothWindow(Screen):
         self.ids.ScanResults_ScrollViewObj.bind(height = resize2)
 
         # for each service found create a custom button which stores bluetooth device/uuid info with it
-        button_itr = 0
-        for paired_device in paired_devices:
+        if self.active_filter == "Filter By Device (All)":
+            button_itr = 0
+            for paired_device in paired_devices:
+                IDs = paired_device.getUuids()
+                for ID in IDs:
+                    # stores created buttons in self.service_buttons
+                    self.service_buttons.append(-1)
+                    self.service_buttons[button_itr] = CustomButton(paired_device, ID)
+                    self.service_buttons[button_itr].bind(size = self.service_buttons[button_itr].setter('text_size')) # not entirely sure how this works for adjusting font size
+                    self.service_buttons[button_itr].bind(on_press = self.connect)
+
+                    # change the size of each button's text if the windows size changes (button width changes if window width changes)
+                    def resize_button_text_if_window_changes(button, new_width):
+                        button.font_size = button.width / (10 * self.num_elems_in_1screen)
+                        if (self.num_elems_in_1screen <= 2 ):
+                            button.font_size = button.width / (25) # font size independent once it spans entire button
+                    self.service_buttons[button_itr].bind(width=resize_button_text_if_window_changes) # when info.height changes run this routine
+
+                    self.ids.grid1.add_widget(self.service_buttons[button_itr])
+                    button_itr = button_itr + 1
+        else:
+            button_itr = 0
             IDs = paired_device.getUuids()
             for ID in IDs:
                 # stores created buttons in self.service_buttons
@@ -612,6 +648,16 @@ class BluetoothWindow(Screen):
             self.ids.NumResults_LabelObj.text = "(" + str(self.num_elems_in_1screen) + " per page)"
             print (self.ids.grid1.row_default_height)
 
+
+    def display_devices(self):
+        device_names = ["Filter By Device (All)"]
+        paired_devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices().toArray()
+        for paired_device in paired_devices:
+            device_names.append(str(paired_device.getName()))
+        self.ids.devices_CustomSpinnerObj.values = device_names
+
+    def set_filter(self, device_name):
+        self.active_filter = device_name
 
 class WindowManager(ScreenManager):
     pass
