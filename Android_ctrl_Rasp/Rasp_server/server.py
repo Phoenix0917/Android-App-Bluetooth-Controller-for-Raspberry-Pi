@@ -51,7 +51,7 @@ LMpwm.start(0)
 RMpwm.start(0)
 GPIO.output(LMdir, GPIO.LOW)
 GPIO.output(RMdir, GPIO.LOW)
-model = core.Model.load('/content/drive/MyDrive/ECE495/objdetector.pth', ['can', 'sphere', 'cube', 'log'])
+model = core.Model.load('../Models/objdetector.pth', ['can', 'sphere', 'cube', 'log'])
 
 
 #Modifying code from detecto so can save image onto pi
