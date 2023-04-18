@@ -106,7 +106,7 @@ WindowManager: # root rule (can be any widget)
                     pos: self.pos
 
         Widget:
-            pos_hint: {'right': .995, 'y': .34}
+            pos_hint: {'right': 1, 'y': .33}
             size_hint: 0.275, 0.1
             canvas:
                 Color:
@@ -124,7 +124,7 @@ WindowManager: # root rule (can be any widget)
 
         Widget:
             pos_hint: {'right': .7, 'y': .04}
-            size_hint: 0.135, 0.4
+            size_hint: 0.275, 0.4
             canvas:
                 Color:
                     rgba: (66/255, 135/255, 245/255,.5)
@@ -134,7 +134,7 @@ WindowManager: # root rule (can be any widget)
 
         Widget:
             pos_hint: {'right': .7, 'y': .04}
-            size_hint: 0.135, 0.4
+            size_hint: 0.275, 0.4
             canvas:
                 Color:
                     rgba: (233/255, 239/255, 255/255,.1)
@@ -143,8 +143,8 @@ WindowManager: # root rule (can be any widget)
                     pos: self.pos
 
         Widget:
-            pos_hint: {'right': .7, 'y': .34}
-            size_hint: 0.135, 0.1
+            pos_hint: {'right': .705, 'y': .33}
+            size_hint: 0.275, 0.1
             canvas:
                 Color:
                     rgba: (1,1,1,1)
@@ -153,10 +153,10 @@ WindowManager: # root rule (can be any widget)
                     pos: self.pos
                     source: 'Images_Used/icon_auto.png'
         Label:
-            pos_hint: {'right': .75, 'y': .34}
-            size_hint: 0.185, 0.1
+            pos_hint: {'right': .7, 'y': .34}
+            size_hint: 0.275, 0.1
             text: "Autonomy"
-            font_size: root.width / 60
+            font_size: root.width / 35
 
         Widget:
             pos_hint: {'right': .995, 'y': .47}
@@ -179,8 +179,8 @@ WindowManager: # root rule (can be any widget)
                     pos: self.pos
 
         Widget:
-            pos_hint: {'right': .995, 'y': .51}
-            size_hint: 0.275, 0.165
+            pos_hint: {'right': .945, 'y': .51}
+            size_hint: 0.225, 0.165
             canvas:
                 Color:
                     rgba: (1,1,1,1)
@@ -355,6 +355,36 @@ WindowManager: # root rule (can be any widget)
             background_normal: ''
             background_color: '#266352'
             size_hint: .125, .125
+
+        Button:
+            id: ExtendAutonSense_ButtonObj
+            text: "Extend\nSensor"
+            pos_hint: {'right': 0.555, 'y': 0.2}
+            font_size: root.width / 50
+            halign: "center"
+            background_normal: ''
+            background_color: '#266352'
+            size_hint: .125, .125
+            always_release: True
+            on_press:
+                root.control_autonomy_sensor('extend')
+            on_release:
+                root.control_autonomy_sensor('stop')
+
+        Button:
+            id: RetractAutonSense_ButtonObj
+            text: "Retract\nSensor"
+            pos_hint: {'right': 0.555, 'y': 0.05}
+            font_size: root.width / 50
+            halign: "center"
+            background_normal: ''
+            background_color: '#266352'
+            size_hint: .125, .125
+            always_release: True
+            on_press:
+                root.control_autonomy_sensor('retract')
+            on_release:
+                root.control_autonomy_sensor('stop')
 
         ToggleButton:
             text: "Start\n(Detection)"

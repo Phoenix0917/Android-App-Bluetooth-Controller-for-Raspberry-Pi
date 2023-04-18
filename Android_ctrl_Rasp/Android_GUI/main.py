@@ -78,6 +78,8 @@ class UserWindow(Screen):
         self.claw_PWM = 2500
         self.killable_thread_arm_movement = None
         self.arm_PWM = 1500
+        self.killable_auton_sense_movement = None
+        self.auton_sense_PWM = 1900
 
         self.killable_thread_orientation_movement = None
         self.sensor = soSense.AndroidSpOrientation()
@@ -403,6 +405,53 @@ class UserWindow(Screen):
             self.ids.MetalDetect_ToggleButtonObj.text = "Start\n(Detection)"
             if bt_send_stream != None:
                 bt_send_stream.write(bytes("MD:" + str(0) + '*', 'utf-8'))
+
+    def control_autonomy_sensor(self, instruction):
+        if instruction == 'extend':
+            self.ids.RetractAutonSense_ButtonObj.disabled = True
+
+            def slow_extend():
+                global bt_send_stream
+                while self.auton_sense_PWM > 1000 : # prevents over extension (past 90 degrees)
+                    if bt_send_stream != None:
+                        self.auton_sense_PWM = self.auton_sense_PWM - 50
+                        bt_send_stream.write(bytes("AS:" + str(self.auton_sense_PWM ) + '*', 'utf-8'))
+                        time.sleep(0.1) 
+                    else:
+                        self.auton_sense_PWM = self.auton_sense_PWM - 50
+                        print(str(self.auton_sense_PWM))
+                        time.sleep(0.1) 
+
+            self.killable_auton_sense_movement = ThreadTracing.thread_with_trace(target = slow_extend)
+            self.killable_auton_sense_movement.start()
+
+        elif instruction == 'retract':
+            self.ids.ExtendAutonSense_ButtonObj.disabled = True
+
+            def slow_retract():
+                global bt_send_stream
+                while self.auton_sense_PWM < 1900: # prevents over retraction into robot
+                    if bt_send_stream != None:
+                        self.auton_sense_PWM = self.auton_sense_PWM + 50
+                        bt_send_stream.write(bytes("AS:" + str(self.auton_sense_PWM ) + '*', 'utf-8'))
+                        time.sleep(0.1) 
+                    else:
+                        self.auton_sense_PWM = self.auton_sense_PWM + 50
+                        print(str(self.auton_sense_PWM))
+                        time.sleep(0.1) 
+
+            self.killable_auton_sense_movement = ThreadTracing.thread_with_trace(target = slow_retract)
+            self.killable_auton_sense_movement.start()
+
+        elif instruction == 'stop':
+            self.killable_auton_sense_movement.kill()
+            self.killable_auton_sense_movement.join()
+            self.ids.ExtendAutonSense_ButtonObj.disabled = False
+            self.ids.RetractAutonSense_ButtonObj.disabled = False
+
+        else:
+            print("Invalid instruction passed")
+
 
 
 class CalibrationWindow(Screen):
