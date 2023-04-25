@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import os
 from gpiozero import Servo
 from time import sleep
+from picamera import PiCamera
 #import pigpio
 import ThreadTracing
 
@@ -21,7 +22,8 @@ MDsig = 11
 ASangle=4
 
 
-
+camera=PiCamera()
+camera.rotation=180
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(LMspeed, GPIO.OUT)
@@ -124,18 +126,22 @@ def data_interpreter(recv_bin):
             global image_sender_sock
             global await_image_reciever_thread
             
+            camera.capture("/home/dylan/Pictures/random.jpg")
+            sleep(.1)
+            print('done')
             
             if image_reciever_sock == None: # only not none if socket setup finished in thread
                 print("Socket not setup to recieve image")
             else:
                 try:
-                    file = open('/home/bent/Desktop/my.jpg', 'rb')
+                    file = open('/home/dylan/Pictures/random.jpg', 'rb')
+                    print('opened')
                     image_data = file.read(2048)
                     while image_data:
                         image_reciever_sock.send(image_data)
                         image_data = file.read(2048)
                         
-                    #image_reciever_sock.send("***")
+                    image_reciever_sock.send("***")
                     
                 except:
                     print("Socket became unavailable since connecting")
