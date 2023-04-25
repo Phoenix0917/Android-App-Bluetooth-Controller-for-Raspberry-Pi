@@ -94,15 +94,17 @@ try:
         input("Enter any character to recieve image - Prevents opening file which means user can't view")
         file = open('new.jpg', 'wb')
         image_chunk = sock.recv(2048)
+        print('receiving')
         while image_chunk:
             if b'***' in image_chunk: # end of file indicator for jpg files
                 break
             file.write(image_chunk)
             image_chunk = sock.recv(2048)
+        
         file.close()
         model = core.Model.load('C:/DEV/objdet/ECE495-SnrDes/Android_ctrl_Rasp/Windows_ImageAnalyzer/objdetector.pth', ['can', 'sphere', 'cube', 'log'])
         image = utils.read_image('C:/DEV/objdet/ECE495-SnrDes/new.jpg') 
-=       predictions = model.predict(image)
+        predictions = model.predict(image)
         labels, boxes, scores = predictions
 
         thresh=0.6
