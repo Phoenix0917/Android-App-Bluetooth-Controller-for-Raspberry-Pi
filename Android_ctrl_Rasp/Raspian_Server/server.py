@@ -23,7 +23,7 @@ ASangle=4
 
 
 camera=PiCamera()
-camera.rotation=180
+#camera.rotation=180
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(LMspeed, GPIO.OUT)
