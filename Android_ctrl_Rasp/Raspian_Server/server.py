@@ -11,7 +11,7 @@ os.system("sudo hciconfig hci0 piscan")
 os.system("echo changed bluetooth advertise setting")
 os.system("sudo pigpiod")
 sleep(.5)
-#pwm=pigpio.pi()
+pwm=pigpio.pi()
 LMspeed = 32 # PWM pin
 LMdir = 36
 RMspeed = 33 #PWM pin
@@ -30,12 +30,12 @@ GPIO.setup(LMspeed, GPIO.OUT)
 GPIO.setup(LMdir, GPIO.OUT)
 GPIO.setup(RMspeed, GPIO.OUT)
 GPIO.setup(RMdir, GPIO.OUT)
-#pwm.set_mode(CLwidth,pigpio.OUTPUT) ##setup servo for claw and arm
-#pwm.set_PWM_frequency(CLwidth,50)
-#pwm.set_mode(ARangle,pigpio.OUTPUT)
-#pwm.set_PWM_frequency(ARangle,50)
-#pwm.set_mode(ASangle,pigpio.OUTPUT)
-#pwm.set_PWM_frequency(ASangle,50)
+pwm.set_mode(CLwidth,pigpio.OUTPUT) ##setup servo for claw and arm
+pwm.set_PWM_frequency(CLwidth,50)
+pwm.set_mode(ARangle,pigpio.OUTPUT)
+pwm.set_PWM_frequency(ARangle,50)
+pwm.set_mode(ASangle,pigpio.OUTPUT)
+pwm.set_PWM_frequency(ASangle,50)
 GPIO.setup(MDsig, GPIO.OUT)
 
 LMpwm = GPIO.PWM(LMspeed, 1000) # set up pwm on this pin with frequency 1000
@@ -44,10 +44,10 @@ LMpwm.start(0)
 RMpwm.start(0)
 GPIO.output(LMdir, GPIO.LOW)
 GPIO.output(RMdir, GPIO.LOW)
-#pwm.set_servo_pulsewidth(CLwidth,2500)
+pwm.set_servo_pulsewidth(CLwidth,2500)
 sleep(1)
-#pwm.set_servo_pulsewidth(ARangle,750)
-#pwm.set_servo_pulsewidth(ASangle,1900)
+pwm.set_servo_pulsewidth(ARangle,750)
+pwm.set_servo_pulsewidth(ASangle,1900)
 GPIO.output(MDsig, GPIO.LOW)
 
 
