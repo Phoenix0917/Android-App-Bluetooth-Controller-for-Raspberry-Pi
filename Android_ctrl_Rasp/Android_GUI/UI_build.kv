@@ -356,6 +356,18 @@ WindowManager: # root rule (can be any widget)
             background_color: '#266352'
             size_hint: .125, .125
 
+        ToggleButton:
+            text: "Start\n(Maze)"
+            id: Maze_ToggleButtonObj
+            pos_hint: {'right': 0.695, 'y': 0.2}
+            font_size: root.width / 50
+            halign: "center"
+            background_normal: ''
+            background_color: '#266352'
+            size_hint: .125, .125
+            on_press: 
+                root.autonomous_maze_traversal()
+
         Button:
             id: ExtendAutonSense_ButtonObj
             text: "Extend\nSensor"
@@ -449,6 +461,7 @@ WindowManager: # root rule (can be any widget)
             size_hint: .1, .08
             on_press: self.state = 'down'
         ToggleButton:
+            id: Reverse_ToggleButtonObj
             text: 'REV'
             font_size: root.width / 35
             group: 'move_type'
@@ -665,7 +678,7 @@ WindowManager: # root rule (can be any widget)
             size_hint: .125, .125
             disabled: True
             on_press:
-                self.parent.parent.kill_pi_power()
+                root.kill_pi_power()
             
             Image:
                 source: 'Images_Used/power_button.png'

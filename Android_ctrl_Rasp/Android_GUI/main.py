@@ -67,8 +67,6 @@ class CustomButton(Button):
         self.halign = "left"
         self.valign = "middle"
 
-
-
 # Defines different screens
 
 class UserWindow(Screen):
@@ -85,7 +83,7 @@ class UserWindow(Screen):
         self.sensor = soSense.AndroidSpOrientation()
         self.sensor_is_already_enabled = 0
 
-    def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
+    def on_pre_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
         self.ids.Control_JoystickObj.bind(pad = self.JoystickHandler)
         if self.manager.current == '': # first entry on program start seems to not update this
             return
@@ -95,6 +93,20 @@ class UserWindow(Screen):
         else:
             self.manager.get_screen("userWindow").ids.status_indicator.text = "Connected"
             self.manager.get_screen("userWindow").ids.KillPi_ButtonObj.disabled = False
+
+    def update_GUI_after_disconnect(self):
+        global bt_client_sock
+        global bt_send_stream
+        try:
+            bt_client_sock.close()
+            bt_send_stream.close()
+        except:
+            pass
+        bt_client_sock = None
+        bt_send_stream = None
+        self.ids.KillPi_ButtonObj.disabled = True
+        self.ids.status_indicator.text = "Unconnected"
+
 
     def JoystickHandler(self, joystick, pad):
         x = str(pad[0])[0:5]
@@ -176,13 +188,19 @@ class UserWindow(Screen):
         '''
 
         if bt_send_stream != None:
-            bt_send_stream.write(bytes("LM:" + str(LM) + '*' + 'RM:' + str(RM) + '*', 'utf-8'))
+            try:
+                bt_send_stream.write(bytes("LM:" + str(LM) + '*' + 'RM:' + str(RM) + '*', 'utf-8'))
+            except:
+                self.update_GUI_after_disconnect()
         else:
             print(str(ang)[0:5] + ":      " + str(LM)[0:5] + "             " + str(RM)[0:5] )
+
 
     def tilt_handler(self, enable):
         if enable == 1:
             self.ids.tilt_ToggleButtonObj.state = 'down'
+            self.ids.Drive_ToggleButtonObj.state = 'down'
+            self.ids.Reverse_ToggleButtonObj.state = 'normal'
             if self.sensor_is_already_enabled  == 0: # not already enabled
                 self.sensor_is_already_enabled = 1
                 self.sensor._enable_listener()
@@ -285,7 +303,10 @@ class UserWindow(Screen):
             RM = RM * self.ids.PwmMultiplier_SliderObj.value
 
             if bt_send_stream != None:
-                bt_send_stream.write(bytes("LM:" + str(LM) + '*' + 'RM:' + str(RM) + '*', 'utf-8'))
+                try:
+                    bt_send_stream.write(bytes("LM:" + str(LM) + '*' + 'RM:' + str(RM) + '*', 'utf-8'))
+                except:
+                    self.update_GUI_after_disconnect()
             else:
                 print(str(LM)[0:5] + "             " + str(RM)[0:5] )
 
@@ -296,7 +317,11 @@ class UserWindow(Screen):
     def kill_pi_power(self):
         global bt_send_stream
         print("sending kill command")
-        bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
+        try:
+            bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
+        except:
+            self.update_GUI_after_disconnect()
+        self.ids.KillPi_ButtonObj.disabled = True
 
 
     def control_claw(self, instruction):
@@ -308,7 +333,10 @@ class UserWindow(Screen):
                 while self.claw_PWM > 500: # prevents value from ever getting above 12
                     if bt_send_stream != None:
                         self.claw_PWM = self.claw_PWM - 50
-                        bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
+                        try:
+                            bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
+                        except:
+                            self.update_GUI_after_disconnect()
                         time.sleep(0.1) 
                     else:
                         self.claw_PWM = self.claw_PWM - 50
@@ -326,7 +354,10 @@ class UserWindow(Screen):
                 while self.claw_PWM < 2500: # prevents value from ever dropping below zero
                     if bt_send_stream != None:
                         self.claw_PWM = self.claw_PWM + 50
-                        bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
+                        try:
+                            bt_send_stream.write(bytes("CL:" + str(self.claw_PWM ) + '*', 'utf-8'))
+                        except:
+                            self.update_GUI_after_disconnect()
                         time.sleep(0.1) 
                     else:
                         self.claw_PWM = self.claw_PWM + 50
@@ -355,7 +386,10 @@ class UserWindow(Screen):
                 while self.arm_PWM > 750 : # prevents value from ever getting above 10
                     if bt_send_stream != None:
                         self.arm_PWM = self.arm_PWM - 25
-                        bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
+                        try:
+                            bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
+                        except:
+                            self.update_GUI_after_disconnect()
                         time.sleep(0.1) 
                     else:
                         self.arm_PWM = self.arm_PWM - 25
@@ -373,7 +407,10 @@ class UserWindow(Screen):
                 while self.arm_PWM < 2000: # prevents value from ever dropping below 3
                     if bt_send_stream != None:
                         self.arm_PWM = self.arm_PWM + 25
-                        bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
+                        try:
+                            bt_send_stream.write(bytes("AR:" + str(self.arm_PWM ) + '*', 'utf-8'))
+                        except:
+                            self.update_GUI_after_disconnect()
                         time.sleep(0.1) 
                     else:
                         self.arm_PWM = self.arm_PWM + 25
@@ -392,19 +429,46 @@ class UserWindow(Screen):
         else:
             print("Invalid instruction passed")
 
-    def object_detect(self):
-      if bt_send_stream != None:
-        bt_send_stream.write(bytes("OD:" + str(1 ) + '*', 'utf-8'))
-
     def metal_detect(self):
         if self.ids.MetalDetect_ToggleButtonObj.state == 'down':
             self.ids.MetalDetect_ToggleButtonObj.text = "Stop\n(Detection)"
             if bt_send_stream != None:
-                bt_send_stream.write(bytes("MD:" + str(1) + '*', 'utf-8'))
+                try:
+                    bt_send_stream.write(bytes("MD:" + str(1) + '*', 'utf-8'))
+                except:
+                    self.update_GUI_after_disconnect()
         else:
             self.ids.MetalDetect_ToggleButtonObj.text = "Start\n(Detection)"
             if bt_send_stream != None:
-                bt_send_stream.write(bytes("MD:" + str(0) + '*', 'utf-8'))
+                try:
+                    bt_send_stream.write(bytes("MD:" + str(0) + '*', 'utf-8'))
+                except:
+                    self.update_GUI_after_disconnect()
+
+
+    def autonomous_maze_traversal(self):
+        if self.ids.Maze_ToggleButtonObj.state == 'down':
+            self.ids.Maze_ToggleButtonObj.text = "Stop\n(Maze)"
+            if bt_send_stream != None:
+                try:
+                    bt_send_stream.write(bytes("MT:" + str(1) + '*', 'utf-8'))
+                except:
+                    self.update_GUI_after_disconnect()
+        else:
+            self.ids.Maze_ToggleButtonObj.text = "Start\n(Maze)"
+            if bt_send_stream != None:
+                try:
+                    bt_send_stream.write(bytes("MT:" + str(0) + '*', 'utf-8'))
+                except:
+                    self.update_GUI_after_disconnect()
+        
+
+    def object_detect(self):
+        if bt_send_stream != None:
+            try:
+                bt_send_stream.write(bytes("OD:" + str(1 ) + '*', 'utf-8'))
+            except:
+                self.update_GUI_after_disconnect()
 
     def control_autonomy_sensor(self, instruction):
         if instruction == 'extend':
@@ -415,7 +479,10 @@ class UserWindow(Screen):
                 while self.auton_sense_PWM > 1000 : # prevents over extension (past 90 degrees)
                     if bt_send_stream != None:
                         self.auton_sense_PWM = self.auton_sense_PWM - 50
-                        bt_send_stream.write(bytes("AS:" + str(self.auton_sense_PWM ) + '*', 'utf-8'))
+                        try:
+                            bt_send_stream.write(bytes("AS:" + str(self.auton_sense_PWM ) + '*', 'utf-8'))
+                        except:
+                            self.update_GUI_after_disconnect()
                         time.sleep(0.1) 
                     else:
                         self.auton_sense_PWM = self.auton_sense_PWM - 50
@@ -433,7 +500,10 @@ class UserWindow(Screen):
                 while self.auton_sense_PWM < 1900: # prevents over retraction into robot
                     if bt_send_stream != None:
                         self.auton_sense_PWM = self.auton_sense_PWM + 50
-                        bt_send_stream.write(bytes("AS:" + str(self.auton_sense_PWM ) + '*', 'utf-8'))
+                        try:
+                            bt_send_stream.write(bytes("AS:" + str(self.auton_sense_PWM ) + '*', 'utf-8'))
+                        except:
+                            self.update_GUI_after_disconnect()
                         time.sleep(0.1) 
                     else:
                         self.auton_sense_PWM = self.auton_sense_PWM + 50
@@ -458,7 +528,7 @@ class CalibrationWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
     
-    def on_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
+    def on_pre_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
         if self.manager.current == '': # first entry on program start seems to not update this
             return
         elif bt_client_sock == None:
@@ -468,21 +538,46 @@ class CalibrationWindow(Screen):
             self.manager.get_screen("calibration").ids.status_indicator.text = "Connected"
             self.manager.get_screen("calibration").ids.KillPi_ButtonObj.disabled = False
 
+    def update_GUI_after_disconnect(self):
+        global bt_client_sock
+        global bt_send_stream
+        try:
+            bt_client_sock.close()
+            bt_send_stream.close()
+        except:
+            pass
+        bt_client_sock = None
+        bt_send_stream = None
+        self.ids.KillPi_ButtonObj.disabled = True
+        self.ids.status_indicator.text = "Unconnected"
+
     def slide_it(self, *args):
         print(args)
         global bt_send_stream 
         if bt_send_stream != None:
             if args[0] == self.ids.left_motor_control:
                 print("this is left motor")
-                bt_send_stream.write(bytes("LM:" + str(args[1]) + '*', 'utf-8'))
+                try:
+                    bt_send_stream.write(bytes("LM:" + str(args[1]) + '*', 'utf-8'))
+                except:
+                    self.update_GUI_after_disconnect()
             elif args[0] == self.ids.right_motor_control:
                 print("this is right motor")
-                bt_send_stream.write(bytes("RM:" + str(args[1]) + '*', 'utf-8'))
+                try:
+                    bt_send_stream.write(bytes("RM:" + str(args[1]) + '*', 'utf-8'))
+                except:
+                    self.update_GUI_after_disconnect()
+
 
     def kill_pi_power(self):
         global bt_send_stream
         print("sending kill command")
-        bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
+        try:
+            bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
+        except:
+            self.update_GUI_after_disconnect()
+        self.ids.KillPi_ButtonObj.disabled = True
+
 
     
 class BluetoothWindow(Screen):
@@ -492,11 +587,36 @@ class BluetoothWindow(Screen):
         self.service_buttons = []
         self.num_elems_in_1screen = 3
         self.active_filter = "Filter By Device (All)"
+
+    def on_pre_enter(self, *args): # change to not be using bt_client_sock as this doesn't indicate an actually STABLE connection
+        if self.manager.current == '': # first entry on program start seems to not update this
+            return
+        elif bt_client_sock == None:
+            self.manager.get_screen("bluetooth").ids.KillPi_ButtonObj.disabled = True
+            for service_button in self.service_buttons:
+                service_button.disabled = False
+                service_button.background_color = [1, 1, 1, 1]
+                service_button.connected = False
     
     def kill_pi_power(self):
         global bt_send_stream
+        global bt_client_sock
         print("sending kill command")
-        bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
+        try:
+            bt_send_stream.write(bytes("SY:kill*", 'utf-8'))
+        except:
+            try:
+                bt_client_sock.close()
+                bt_send_stream.close()
+            except:
+                pass
+            bt_client_sock = None
+            bt_send_stream = None
+        self.ids.KillPi_ButtonObj.disabled = True
+        for service_button in self.service_buttons:
+            service_button.disabled = False
+            service_button.background_color = [1, 1, 1, 1]
+            service_button.connected = False
 
     def scan_paired(self):
         # searches saved paired devices and the services available on when it was paired
@@ -659,6 +779,7 @@ class BluetoothWindow(Screen):
         button_inst.background_color= '#79f53b'
         button_inst.connected = True
         button_inst.disabled = False
+        self.ids.KillPi_ButtonObj.disabled = False
 
         # redundant?
         for service_button in self.service_buttons:
@@ -676,6 +797,7 @@ class BluetoothWindow(Screen):
     def disconnect_success(self, button_inst, dt):
         button_inst.background_color = [1, 1, 1, 1]
         button_inst.connected = False
+        self.ids.KillPi_ButtonObj.disabled = True
 
         for service_button in self.service_buttons:
             service_button.disabled = False
