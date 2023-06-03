@@ -1,5 +1,7 @@
 Bluetooth Raspberry Pi Controller
 =================================
+Project Concluded - See Final_Product_Documentation folder for information on the final results.  End product images and more on the android controller and autonomous codes found on this repo can be seen near the end of the presentationd pdf file. 
+
 ECE495-Senior Design  
 Project number F22-21-BOE1.  
 Search and rescue Boeing sponsored robot.  
