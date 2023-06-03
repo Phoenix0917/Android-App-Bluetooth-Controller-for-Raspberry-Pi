@@ -1,6 +1,6 @@
 Bluetooth Raspberry Pi Controller
 =================================
-Project Concluded - See Final_Product_Documentation folder for information on the final results.  End product images and more on the android controller and autonomous codes found on this repo can be seen near the end of the presentationd pdf file. 
+Project Concluded - See Final_Product_Documentation folder for information on the final results of this project.  End product images and more information on the android controller and autonomous codes which are found on this repo can be seen near the end of the presentation pdf file. Further development on this project is unlikely in the foreseeable future.
 
 ECE495-Senior Design  
 Project number F22-21-BOE1.  
