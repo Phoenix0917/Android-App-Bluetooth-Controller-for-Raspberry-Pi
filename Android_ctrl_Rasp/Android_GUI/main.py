@@ -10,7 +10,7 @@ from kivy.uix.slider import Slider
 from kivy.graphics import *
 from kivy.core.window import Window
 from kivy.clock import Clock
-from kivy.garden.joystick import Joystick
+from garden.joystick import Joystick
 
 
 import threading
@@ -620,8 +620,10 @@ class BluetoothWindow(Screen):
 
     def scan_paired(self):
         # searches saved paired devices and the services available on when it was paired
-        
+        print('here1')
+	
         if self.active_filter == "Filter By Device (All)":
+
             number_of_uuids = 0 # used to determine how many rows to create in gridLayout
             print("    *** Starting BT Paired Scan")
             paired_devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices().toArray()
@@ -630,9 +632,13 @@ class BluetoothWindow(Screen):
             for paired_device in paired_devices:
                 print("    *** " + str(paired_device.getName()))
                 IDs = paired_device.getUuids()
-                for ID in IDs:
-                    print("    ***" + str(ID.toString()))
-                    number_of_uuids = number_of_uuids + 1
+                try:
+                    for ID in IDs:
+                        print("    ***" + str(ID.toString()))
+                        number_of_uuids = number_of_uuids + 1
+                except:
+                    print('failed')
+                    pass
             print("   *** ")        
         else: # some other device is being used to filter by
             number_of_uuids = 0 # used to determine how many rows to create in gridLayout
@@ -652,11 +658,12 @@ class BluetoothWindow(Screen):
         # clean out any prior widgets and data associated with them
         self.ids.grid1.clear_widgets()
         self.service_buttons = []
-
+        print('here3')
         # sets number and sizing of rows in grid widget 
         self.ids.grid1.rows = number_of_uuids
+        
         self.ids.grid1.height = self.ids.grid1.row_default_height * number_of_uuids
-
+        
         def resize(instance, value):
             print(self.ids.grid1.row_default_height)
             self.ids.grid1.height = self.ids.grid1.row_default_height * number_of_uuids
@@ -673,22 +680,26 @@ class BluetoothWindow(Screen):
             button_itr = 0
             for paired_device in paired_devices:
                 IDs = paired_device.getUuids()
-                for ID in IDs:
+                try:
+                    for ID in IDs:
                     # stores created buttons in self.service_buttons
-                    self.service_buttons.append(-1)
-                    self.service_buttons[button_itr] = CustomButton(paired_device, ID)
-                    self.service_buttons[button_itr].bind(size = self.service_buttons[button_itr].setter('text_size')) # not entirely sure how this works for adjusting font size
-                    self.service_buttons[button_itr].bind(on_press = self.connect)
+                        self.service_buttons.append(-1)
+                        self.service_buttons[button_itr] = CustomButton(paired_device, ID)
+                        self.service_buttons[button_itr].bind(size = self.service_buttons[button_itr].setter('text_size')) # not entirely sure how this works for adjusting font size
+                        self.service_buttons[button_itr].bind(on_press = self.connect)
 
                     # change the size of each button's text if the windows size changes (button width changes if window width changes)
-                    def resize_button_text_if_window_changes(button, new_width):
-                        button.font_size = button.width / (10 * self.num_elems_in_1screen)
-                        if (self.num_elems_in_1screen <= 2 ):
-                            button.font_size = button.width / (25) # font size independent once it spans entire button
-                    self.service_buttons[button_itr].bind(width=resize_button_text_if_window_changes) # when info.height changes run this routine
+                        def resize_button_text_if_window_changes(button, new_width):
+                            button.font_size = button.width / (10 * self.num_elems_in_1screen)
+                            if (self.num_elems_in_1screen <= 2 ):
+                                button.font_size = button.width / (25) # font size independent once it spans entire button
+                        self.service_buttons[button_itr].bind(width=resize_button_text_if_window_changes) # when info.height changes run this routine
 
-                    self.ids.grid1.add_widget(self.service_buttons[button_itr])
-                    button_itr = button_itr + 1
+                        self.ids.grid1.add_widget(self.service_buttons[button_itr])
+                        button_itr = button_itr + 1
+                except:
+                    print('failed2')
+                    pass
         else:
             button_itr = 0
             IDs = paired_device.getUuids()
@@ -729,116 +740,23 @@ class BluetoothWindow(Screen):
         else:
             self.ids.PageStatus_LabelObj.text = "Disconnecting..."
 
-        for service_button in self.service_buttons:
-            service_button.disabled = True
-
-        def connect_logic(button_inst):
-            global bt_client_sock
-            global bt_send_stream
-
-            if button_inst.connected == False: # attempt connect to server
-                try: 
-                    print(str(button_inst.device_with_service))
-                    print(str(button_inst.service_uuid))
-                    bt_client_sock = button_inst.device_with_service.createRfcommSocketToServiceRecord(button_inst.service_uuid.getUuid())
-                    print("    *** Socket Created")
-                    print(str(bt_client_sock))
-                    bt_client_sock.connect()
-                    print("    *** Socket Connected")
-                    bt_send_stream = bt_client_sock.getOutputStream()
-                    print("    *** Stream Created")
-                    print(str(bt_send_stream))
-                    print("    *** Connect Complete")
-                    Clock.schedule_once(partial(self.connect_success, button_inst))
-                except:
-                    print("    *** Unsuccessful Socket/Stream Creation/Connection")
-                    try:
-                        bt_client_sock.close()
-                        bt_send_stream.close()
-                    except:
-                        pass
-                    bt_client_sock = None
-                    bt_send_stream = None
-                    Clock.schedule_once(self.connect_unsuccess)
-
-            else: # attempt disconnect from server
-                print("    *** Attempting Disconnect")
-                try:
-                    bt_client_sock.close()
-                    bt_send_stream.close()
-                    bt_client_sock = None
-                    bt_send_stream = None
-                    print("    *** Successful Socket/Stream Close/Disconnection")
-                    Clock.schedule_once(partial(self.disconnect_success, button_inst))
-                except:
-                    print("    *** Unsuccessful Socket/Stream Close/Disconnection")
-
-        threading.Thread(target=connect_logic, args = [button_inst]).start()
-        
-    def connect_success(self, button_inst, dt):
-        button_inst.background_color= '#79f53b'
-        button_inst.connected = True
-        button_inst.disabled = False
-        self.ids.KillPi_ButtonObj.disabled = False
-
-        # redundant?
-        for service_button in self.service_buttons:
-            if service_button != button_inst:
-                service_button.disabled = True
-
-        self.ids.PageStatus_LabelObj.text = "Ready"
-
-    def connect_unsuccess(self, dt):
-        for service_button in self.service_buttons:
-            service_button.disabled = False
-
-        self.ids.PageStatus_LabelObj.text = "Ready"
-
-    def disconnect_success(self, button_inst, dt):
-        button_inst.background_color = [1, 1, 1, 1]
-        button_inst.connected = False
-        self.ids.KillPi_ButtonObj.disabled = True
-
-        for service_button in self.service_buttons:
-            service_button.disabled = False
-        
-        self.ids.PageStatus_LabelObj.text = "Ready"
-
-
-
-    def increment_elem (self):
-        self.num_elems_in_1screen = self.num_elems_in_1screen + 1
-        self.ids.grid1.row_default_height = self.ids.ScanResults_ScrollViewObj.height / self.num_elems_in_1screen
-        self.ids.NumResults_LabelObj.text = "(" + str(self.num_elems_in_1screen) + " per page)"
-        print (self.ids.grid1.row_default_height)
-
-    def decrement_elem(self):
-        if self.num_elems_in_1screen >= 2:
-            self.num_elems_in_1screen = self.num_elems_in_1screen -1
-            self.ids.grid1.row_default_height = self.ids.ScanResults_ScrollViewObj.height / self.num_elems_in_1screen
-            self.ids.NumResults_LabelObj.text = "(" + str(self.num_elems_in_1screen) + " per page)"
-            print (self.ids.grid1.row_default_height)
-
-
-    def display_devices(self):
-        device_names = ["Filter By Device (All)"]
-        paired_devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices().toArray()
-        for paired_device in paired_devices:
-            device_names.append(str(paired_device.getName()))
-        self.ids.devices_CustomSpinnerObj.values = device_names
-
-    def set_filter(self, device_name):
-        self.active_filter = device_name
-
-class WindowManager(ScreenManager):
-    pass
-
-kv = Builder.load_file('UI_build.kv')
-
-class AwesomeApp(App):
-    def build(self):
-        return kv
-
-if __name__=="__main__":
-    AwesomeApp().run()
-
+        for service_button in self.service_butmP
+9`UvX$"çï‚QuŒ1êÔzÄÔ[ÚLÊ¡²xN‡¹½.,6³ßİMıK)6ÚrNUW*êœYˆ‰qÆĞ÷ïOI¨éwŞêÀ´Å1ßÜu6˜şS{ÇiÖ­Ye<²fü\[Ñë8lé+{vyâ5/”|Š¬p’DîYQ_Æñ1áXÓ¬VÁ2üIş«kşéçĞyôgÊéÙŒ$œŸ¦3§xqh‚9³d*ª‘ÓÚ´Ús%.22H/µº„»¸éºÆ7¥Ç*1ËtÓ ü•67ÇæBm†$NÅ¤“¾ÛÊl$3¦
+!á•™rßèB3îx—QÑ9JƒX/Ùğ,uT¹–¢S9Ktø=®™‹ŸÑ·µ¤­://‹>p^7»î«¦#Œ”çĞmŞõ‚N7vövÃ~ÌŒ€)ÑˆZ+-4e)|Y,`ñÃ
+d®²ªú[#BİiÉï£—{›ÌJ£8B.õào_*/â“ã-Ø»úe§è§R;‚2?Ÿ=ifÖ®ÑàœÃ¯.·lrqºØ$Pì 3U#ÿœµìÆ§sı“•úDaæ°š@cYëÃ	H\õƒ%Lwn‘(c%ã*ÂW;ô/¡t…^<7¼eú&@ìCÔ3Ä2bQÚµ±@¯*MÃû¿Ì¹ˆ&#ÄÿzŒ¿Æ^Ta+¨G%¶ë×ÇI{Ø+,_L–.¨.ˆƒıñ´’¸rà™Âyèäµ]Ö“İ‘Ù=4¨1Êy¶8®ğ&’ÔËÔàõnäMâ=±ÛqóØøìùHü}ßüØCê·0×íØ  ¤	aâ²%:À¾~1'Ì§¡§´Î‚ËD6Ï×4ÕRX×‘g?Ó­0È¯ù|Ÿ	
+AÛÒ°¤Ä—¼d‘]%ô%€`Ñncx-Í€å¢.ZÙÚf€T²ôµÎN¸â6= f0/ıÑçjñL-óšt -|´KÎdò66¬'ì
+ÔÕıab¨¡C¶¬n»ÅŠ(h©= >85ªç<³‡9ÚÉ¹á‹°åÙîôÃ§÷å¨ÉÚ«˜‰×iµ„ O]fè’Z4oÎ—n>¶ÊÉ^³£Õ÷†âÚãó‹» 8Ùt4N™yöÍ4Ê¢%Ö"Í¥wQ~ ÿ&)#ÎP‘c¡ûwÔ@Æ‡ŞˆáÜ™èKŒèï9¦ÁP*”'?;ˆ'H¿šû”í7í¬·m
+ßYv¡_¤ĞY½ƒŠu¦NÄêßö?Ã˜õß€Ğª!¨•7!ßmëı¼{Ó§×Hİ»“È4£½1nÌA˜ô´ûµ+9údÌ“ÂÓ#Ïs›|1[ÄNj¸ª š{„°æHŠ’ôf¡’¼<În—DtCÊE¥¤`"òJøÑpJùº/x¢YŞËºÒù¤"®ïdh&ŒıJC&Ä–×ôÜ=]¢clãÌû;T†;?sãºm‚P÷a°ò†‹wp¸èîRİ¤Ñ2Æä”›Ø„ê'æíT§¿5•³3Í?Fëµæ!'¿|ÂÇíÎ–EÓK	›¯ 6û´@BŸåÔÁ3`‡,³9äMMâÛˆˆq
+£Qï½¾ú
+{ìHXÈÓñ•T¯º›ùBıï~C@b2¦ˆPÌ­F'Æ@!Õöí™¿bëFz§ı(»˜DÏ´~Æk [“g„›œÈT	í@i¾k±K§Éa\,UùÌäFÁÿ!,Dk0èŒÖj¦8+ƒf«u<~!9(>ëö‰mõÔ+½â_³-*L¨€ÚM¡Ú×`v¾^"”+£ËŞuÒSpK’Án®`ğ¨moå¶à[<^¸/.àEß/éî/¾6¬{¿
+-®T“Üú¢Xµ°c;Ê«U‘
+hZ„\ƒlLõN=‘v‘›±)†¡=…¸dESÔşÜï"5µ¥ÆAJ®“lí“Xâ™•_šT­XG×çäªbOó4&ÎqWm¶3j`¬ñÖ³pä«tW !zÏX »Ïm¨ë÷j<	‘H€utã}ë0•a H×\ºvLêÇc1-+'Óå[Uó+d4ƒD…"4ŞŞ£ÀRübß%Ÿj@xƒŸĞÜÎÁ,"}Ş8š“Rv×°Íi÷~òtÌ^ÚF¼œ²0¾@ÅÂCõõÊ%ª*$nhôÖÚİwàn4QJc‹±ä|XöWpÛDû×
+Q¦½XÃ_
+‚—áªvòÑ¢Ş-?éÒ ß‹\Q6kbzû;Ô‚ÔÌ=äƒãØ5Ş‰Š§üiSŞ\EÍbˆi1ÿq DÑÿQ­1£Ôœı‡[û¡å8à<¸|.>¼-‘»\ôè^)’o<`<ÛËoA²¾Aû¾§Âí§;–É(\ÊlªÌ=h­s/É²mp§Lôgz’–GÉÎe™lS·´ÏÖ_®7ÙÏÃúÔ·Ü	>q5LŞo³ôü(wëâÏF‰”}ş•ïáfµ\½è¸ÁoÅ•)u=D¸0l·Rö…_WLp=}¨×ó*Oæ‘\Nt‘=Ò‘bÊ€to†üóbdÒºCDåş‹Æ`Œ „¤úHqbe¹Á&Åı¬zuÄo¬¶bo^AT‡ûGÜki•J?.-]Èº\ÌïÊ:èĞÖ)A^`’‰3<"°Æåÿà½¸ÖUI·«,­ésy‹®¦dßı³86(…°*;,’‘ówÁ¨:F‚uj=bê-m&åPÙ<§Ã†Ü^›Ùïn¦ş¿¥m9§ª+OuÎˆ,ÄD8cèû÷§$Ôô;ou`Úâ˜oî:Lÿ©½ã4ëÖ¬2Y3~®­èu
+¶ô•=»<ñšJ>EV8I¢÷¬¨/ãø˜p¬ÀéÖ«`™ş$ÿÕµ
+ÿôsè<ú3åôlFÎOÓ™S¼84ÁœY2ÕÈimZí¹™¤—Z]Â]Üt]ã›Òc•˜e	ºiş€J››cs¡6	C§â@ÒIßme6’Ó	…†ğÊL¹ot¡‡w¼Ë¨è¥A¬—Àlx–:ª\ËÑ©œ%:ü×ÌÅ€ÏèÛZÒV——E8¯›]÷UÓ†FÊsè6ïzA§;{»a?fFÀ”hD­•š²”¾¬N°øa2WYÕGı­¡î´ä÷ÑË½Mf%Š‡Q!—zğ·/•ñÉñŠì]ı²SôS©NA™ŸÏ43k×hpÎáW—[6¹8]l(v€™ªÇ‘ÆÎZvãÓ¹şÉJ}¢0sXM ±¬õá$O®úÁ¦‰;·ÈÇ?”±’qá«ú—PºB/›
+Ş2} Gö!êb±(íÚX W•¦áı_æ\D“â=Æ_c/ª°Ô£Ûõëã¤=ì–/&KTÄÁşxZI\9ğƒLá€<tòÚ.ëÉîÈìÔå¼ÛNWxIêejğz7Hr‚&ñØí¸ylüö|$ş¾Îo~ì!õ[˜ëöGlPÒ„Ç° qÙ’`_?Š˜æÓĞSZgÁe"›çkšj)¬ëÈ…³‰Ÿ†éVä×|¾Ï‰ í	iXRâK^²È®’úˆ@°h·1¼–fÀrQ­lm3@*YúZHg'\q›3˜—şèŒsµø¦–yM:€>Ú%g2ùÖÎvêêş01ÔP![	V·İbE´TŒ PœÕsÙ†ÃíäÜğEØÇòŒl÷úá¿ÓûrÔdíUÌÄë´ZB€§.3tI-š7çK7[åˆd¯ÙÑê{CqíñyŠÅİ œl:'„Ì<ûfeÑk‘æÒ»(?€“”‘?g¨È±ĞıÏ;ê ãCoÄpîLô%Fô÷Ó`(ÊŠ“ŸÄ¤_Í}Êö›vÖÛ¶…ï,»Ğ/Rè¬ŞÀŠAÅ:S'bõoûŸaÌúo@hÕÔÊ¿›ïˆ¶õşFŞ½éÓk¤îİIdšÑŞ7æ LzÚıÚ•}2æIáé‘ç¹ÀM¾˜-b'5ÜU
+PÍÆ=BGXs$EIz³PIŞg·ŠK"º!e¢RR0y%üh8¥|İ…<Ñ,ïe]é|R×w24Æ~¥!bËëzî®ÑÀ1¶qæ}‚*Ã†Ÿ¹q]Š6A(û0XyÃÅ;8\tw©nÒhcrÊMlÂ
+õóvªÓ_ÇšJ„Ù™æ£õZó“€_>áãvgË‚¢é¥„ÍW€›}Z ¡Ïrêà°C–¿Ùò¦&ñmDÄ8…Ñ¨÷^_}…=v$,äéøJ*‹WİÍ|¡ş÷Î‰G¿! 1HSD(æV£c jûöÌ_±u#=„Ó~”]L¢gZ?ã5€­É³ÂÍ
+NäGª„v 4ßµØ¥Óä0.–ª|fr£àÿ‰–F¢µ tFk5Sœ•A³Õ:?¿ŸuûŠÄ¶zj†•^ñ/ÈÙ&T@í¦PíkH0;ß/Ê•Ñeïƒ:é…)¸%É`7W0xÔ¶·r[ğ-/Üğ¢Šï—ô÷_›?Ö=_…WªIn}Q¬ZØ±åÕªH4-BŠ@®A6¦z§H;‚ÀÈÍØÃĞBÜ²Š")jî÷‘šÚRã %×I¶ÀöI,ñL‚Ê/MªV,‡£ësrU±§yç¸«6Û50Ö†xëY8òUº+‚Ğ½g,ĞŠŒİç6Tõ{5„H$À::Šñ¾u˜Ê0P¤k®	];&u†ã±˜–•“éò­ªù2šA"BoïQ`)~±ï‡O5  ¼ÁOhnç`‘>oÍI©‚»kØæ4‚{?y:f/m#^ÎÀGY_ Èbá¡úzåU74zkíî;p7š(¥±ÅXrO>,û«¸m¢ık…(Ó^¬á/ÁËpU»@ùhQï–Ÿti€ïE®(›51½ıjAjæÈ?rˆÁqìšïDÅSş´)ï®Î¢f1D†´˜ÿ8 ¢èÎÿ¨Ö˜QjÎşÃ­ıĞrœp	Ü@>—Ş–È].zt¯É70íå·‹ Yß }ßSáöÓK‡d.e6Uæ´†Ö¹—dÙ6¸S&	
+z‡3=IË£dç²L¶©[Úgë/×›ìça}ê[îŸ¸&ï·Yz~H”»uñg£DJÇ>ÿÊ÷ğ³Z®^t\ˆà·âÊ”ºŠ"\6[)ûÂ¯+&¸>Ôëy•‡'óH.'ºHÈéH1e@º7Cşy12iİ!¢rÿEc0FPBRı	¤@‡8±²Ü`“â~V½:â7V[±7¯ ªC‰ı#îµŒ´J¥—–.d].ƒæwethë” /0ÉÄ‚XãòğŞ‚\ëª¤ÛÕF–Öt¹¼EWS2ÇïşYœG”BX•IƒÈù»`T#AŒ:µ1õ–€6“r¨lÓaCn¯‹Íìw·GSÿßRŠ¶œSÕ•§Š†:gDb¢Fœ1ôıûSjú·:0mqÌ7w¦ÿÔŞqšukV¬?×Vô:[úÊ]ø@Í%Ÿ"+œ$Q‡{VÔ—q|L8Vàôë…U°Ì’ÿêZ…ú9tı™rz6#	ç§éÌ)^š`Î,™Šjä´6­ö\‰‹Ì‡ÒÆK­.á.nº®ñMé±JÌ²İ4@¥ÍÍ±¹P›„!‰Sq é¤ï¶2ÉŒé„BÃ@Hxe¦ƒÜ7º…ĞÃŒ;ŞeTtÒÇ ÖK`6<KU®åƒèTÎ~kæbÀgôm-i«ÎËË¢œ×Í®ûªiÃ#å9t›w½ Ó½İ°3#`J4¢ÖJMYÊ_V'Xü°…™«¬ê£şÖ‡PwZòûèåŞ&³ÅÃ(K=øÛ—Ê‹øäxEö®~Ù)ú©ÔN§ ÌÏgOš™µ…k48çğÀ«‡Ë-›\œ.¶	;ÀLÕãHã?g-»ñé\ÿd¥>Q˜9¬&ĞXÖúp’'Wı`	ÓÄ[äãÊXÉ¸ŠğÕıK(]¡ÏMo™¾	#ûõ±ŒX”vm,Ğ«JÓğş/s.¢Éñ¿ã
